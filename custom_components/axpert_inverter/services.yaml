@@ -1,0 +1,10 @@
+send_command:
+  name: Send Command
+  description: Sends a raw command to the Axpert Inverter and returns the response.
+  fields:
+    command:
+      name: Command
+      description: The command string to send (e.g., QPIGS, QID).
+      required: true
+      selector:
+        text:

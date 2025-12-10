@@ -1,0 +1,10 @@
+{
+  "domain": "axpert_inverter",
+  "name": "Axpert Inverter",
+  "codeowners": [],
+  "config_flow": true,
+  "documentation": "https://github.com/arnyminerz/axpert-inverter",
+  "iot_class": "local_polling",
+  "version": "1.0.0",
+  "requirements": []
+}
