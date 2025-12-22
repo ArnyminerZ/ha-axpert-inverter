@@ -53,8 +53,10 @@ async def async_setup_entry(
         AxpertSensor(coordinator, "pv_input_current", "PV Input Current", UnitOfElectricCurrent.AMPERE, SensorDeviceClass.CURRENT),
         # Synthetic PV Power Sensor
         AxpertPVSensor(coordinator),
-        # Synthetic Output Current Sensor
-        AxpertOutputCurrentSensor(coordinator),
+        # QPIRI Rated Information
+        AxpertSensor(coordinator, "grid_rating_current", "Grid Rating Current", UnitOfElectricCurrent.AMPERE, SensorDeviceClass.CURRENT),
+        AxpertSensor(coordinator, "ac_output_rating_current", "Output Rating Current", UnitOfElectricCurrent.AMPERE, SensorDeviceClass.CURRENT),
+        AxpertSensor(coordinator, "current_max_ac_charging_current", "Max AC Charging Current", UnitOfElectricCurrent.AMPERE, SensorDeviceClass.CURRENT),
     ]
     
     # Energy Sensors (Integration)
@@ -187,53 +189,6 @@ class AxpertEnergySensor(CoordinatorEntity, RestoreEntity, SensorEntity):
     def native_value(self):
         return round(self._state, 2)
     
-    @property
-    def device_info(self):
-        """Return device information."""
-        return {
-            "identifiers": {(DOMAIN, "axpert_inverter")},
-            "name": "Axpert Inverter",
-            "manufacturer": "Voltronic",
-            "model": "Axpert",
-            "sw_version": self.coordinator.firmware_version,
-        }
-
-class AxpertOutputCurrentSensor(CoordinatorEntity, SensorEntity):
-    """Synthetic sensor for Output Current (S / V) or (S / (V*1.732))."""
-    
-    def __init__(self, coordinator):
-        super().__init__(coordinator)
-        self._attr_name = "Output Current"
-        self._attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
-        self._attr_device_class = SensorDeviceClass.CURRENT
-        self._attr_unique_id = "axpert_output_current"
-        self._attr_state_class = SensorStateClass.MEASUREMENT
-        self._attr_icon = "mdi:current-ac"
-
-    @property
-    def native_value(self):
-        s = self.coordinator.data.get("ac_output_apparent_power", 0)
-        v = self.coordinator.data.get("ac_output_voltage", 0)
-        
-        try:
-            s_val = float(s)
-            v_val = float(v)
-            if v_val == 0:
-                return 0.0
-            
-            # Check phase config from coordinator
-            is_tri_phase = self.coordinator.phase_config == PHASE_TRI
-            
-            if is_tri_phase:
-                # I = S / (V * sqrt(3))
-                return round(s_val / (v_val * 1.732), 1)
-            else:
-                # I = S / V
-                return round(s_val / v_val, 1)
-                
-        except (ValueError, TypeError):
-            return 0.0
-
     @property
     def device_info(self):
         """Return device information."""

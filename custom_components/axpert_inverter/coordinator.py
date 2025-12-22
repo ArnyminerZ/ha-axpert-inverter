@@ -9,7 +9,7 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from .axpert import AxpertInverter
-from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, CONF_OUTPUT_PHASE, PHASE_MONO
+from .const import DOMAIN, DEFAULT_SCAN_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,7 +27,6 @@ class AxpertDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
         )
         self.firmware_version = None
-        self.phase_config = entry.data.get(CONF_OUTPUT_PHASE, PHASE_MONO)
 
     async def _async_update_data(self):
         """Update data via library."""
@@ -46,6 +45,12 @@ class AxpertDataUpdateCoordinator(DataUpdateCoordinator):
         data = self.inverter.get_general_status()
         if not data:
             raise UpdateFailed("Received empty data from QPIGS")
+            
+        # Also get rated information (QPIRI)
+        # We can optimize this to run less frequently if needed, but for now every update is OK.
+        rated_data = self.inverter.get_rated_information()
+        if rated_data:
+            data.update(rated_data)
         
         # Also get mode
         # mode = self.inverter.get_mode()

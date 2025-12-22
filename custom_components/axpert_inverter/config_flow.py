@@ -10,9 +10,6 @@ from .const import (
     DOMAIN, 
     CONF_DEVICE_PATH, 
     DEFAULT_DEVICE_PATH,
-    CONF_OUTPUT_PHASE,
-    PHASE_MONO,
-    PHASE_TRI,
 )
 from .axpert import AxpertInverter
 
@@ -47,7 +44,6 @@ class AxpertConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema({
                 vol.Required(CONF_DEVICE_PATH, default=DEFAULT_DEVICE_PATH): str,
-                vol.Required(CONF_OUTPUT_PHASE, default=PHASE_MONO): vol.In([PHASE_MONO, PHASE_TRI]),
             }),
             errors=errors,
         )

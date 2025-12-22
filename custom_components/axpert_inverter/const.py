@@ -19,8 +19,3 @@ CMD_PGR01 = "PGR01"  # UPS range (Grid)
 # Device Info
 MANUFACTURER = "Voltronic/Axpert"
 MODEL = "Axpert Inverter"
-
-# Output Phase Configuration
-CONF_OUTPUT_PHASE = "output_phase"
-PHASE_MONO = "Mono-phase"
-PHASE_TRI = "Tri-phase"
