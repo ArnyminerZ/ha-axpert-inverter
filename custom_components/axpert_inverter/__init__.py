@@ -23,7 +23,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     device_path = entry.data[CONF_DEVICE_PATH]
     
     inverter = AxpertInverter(device_path)
-    coordinator = AxpertDataUpdateCoordinator(hass, inverter)
+    coordinator = AxpertDataUpdateCoordinator(hass, inverter, entry)
 
     await coordinator.async_config_entry_first_refresh()
 

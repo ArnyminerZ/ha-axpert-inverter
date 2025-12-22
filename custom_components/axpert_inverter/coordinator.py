@@ -9,16 +9,17 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from .axpert import AxpertInverter
-from .const import DOMAIN, DEFAULT_SCAN_INTERVAL
+from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, CONF_OUTPUT_PHASE, PHASE_MONO
 
 _LOGGER = logging.getLogger(__name__)
 
 class AxpertDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching Axpert Inverter data."""
 
-    def __init__(self, hass: HomeAssistant, inverter: AxpertInverter):
+    def __init__(self, hass: HomeAssistant, inverter: AxpertInverter, entry: ConfigEntry):
         """Initialize."""
         self.inverter = inverter
+        self.entry = entry
         super().__init__(
             hass,
             _LOGGER,
@@ -26,6 +27,7 @@ class AxpertDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
         )
         self.firmware_version = None
+        self.phase_config = entry.data.get(CONF_OUTPUT_PHASE, PHASE_MONO)
 
     async def _async_update_data(self):
         """Update data via library."""
