@@ -39,9 +39,6 @@ class AxpertDataUpdateCoordinator(DataUpdateCoordinator):
 
     def _io_update(self):
         """Synchronous update logic."""
-        if not self.firmware_version:
-             self.firmware_version = self.inverter.get_firmware_version()
-        
         data = self.inverter.get_general_status()
         if not data:
             raise UpdateFailed("Received empty data from QPIGS")

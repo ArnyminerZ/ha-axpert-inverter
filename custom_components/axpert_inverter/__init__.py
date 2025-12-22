@@ -25,6 +25,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     inverter = AxpertInverter(device_path)
     coordinator = AxpertDataUpdateCoordinator(hass, inverter, entry)
 
+    # Fetch firmware version once at startup
+    try:
+        coordinator.firmware_version = await hass.async_add_executor_job(inverter.get_firmware_version)
+    except Exception as e:
+        _LOGGER.warning(f"Failed to fetch firmware version: {e}")
+        coordinator.firmware_version = "Unknown"
+
     await coordinator.async_config_entry_first_refresh()
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
