@@ -46,12 +46,7 @@ class AxpertDataUpdateCoordinator(DataUpdateCoordinator):
         if not data:
             raise UpdateFailed("Received empty data from QPIGS")
             
-        # Also get rated information (QPIRI)
-        # We can optimize this to run less frequently if needed, but for now every update is OK.
-        rated_data = self.inverter.get_rated_information()
-        if rated_data:
-            data.update(rated_data)
-        
+
         # Also get mode
         # mode = self.inverter.get_mode()
         # data["device_mode"] = mode

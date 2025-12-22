@@ -53,10 +53,10 @@ async def async_setup_entry(
         AxpertSensor(coordinator, "pv_input_current", "PV Input Current", UnitOfElectricCurrent.AMPERE, SensorDeviceClass.CURRENT),
         # Synthetic PV Power Sensor
         AxpertPVSensor(coordinator),
-        # QPIRI Rated Information
-        AxpertSensor(coordinator, "grid_rating_current", "Grid Rating Current", UnitOfElectricCurrent.AMPERE, SensorDeviceClass.CURRENT),
-        AxpertSensor(coordinator, "ac_output_rating_current", "Output Rating Current", UnitOfElectricCurrent.AMPERE, SensorDeviceClass.CURRENT),
-        AxpertSensor(coordinator, "current_max_ac_charging_current", "Max AC Charging Current", UnitOfElectricCurrent.AMPERE, SensorDeviceClass.CURRENT),
+        # Real-time Output Current Sensor (Calculated)
+        AxpertOutputCurrentSensor(coordinator),
+        # Real-time Grid Current Sensor (Calculated)
+        AxpertGridCurrentSensor(coordinator),
     ]
     
     # Energy Sensors (Integration)
@@ -197,5 +197,106 @@ class AxpertEnergySensor(CoordinatorEntity, RestoreEntity, SensorEntity):
             "name": "Axpert Inverter",
             "manufacturer": "Voltronic",
             "model": "Axpert",
+            "sw_version": self.coordinator.firmware_version,
+        }
+
+class AxpertOutputCurrentSensor(CoordinatorEntity, SensorEntity):
+    """Synthetic sensor for Output Current (Apparent Power / Voltage)."""
+    
+    def __init__(self, coordinator):
+        super().__init__(coordinator)
+        self._attr_name = "Output Current"
+        self._attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
+        self._attr_device_class = SensorDeviceClass.CURRENT
+        self._attr_unique_id = "axpert_output_current"
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_icon = "mdi:current-ac"
+
+    @property
+    def native_value(self):
+        s = self.coordinator.data.get("ac_output_apparent_power", 0)
+        v = self.coordinator.data.get("ac_output_voltage", 0)
+        
+        try:
+            s_val = float(s)
+            v_val = float(v)
+            if v_val == 0:
+                return 0.0
+            
+            # Simple I = S / V for real-time estimation
+            return round(s_val / v_val, 1)
+                
+        except (ValueError, TypeError):
+            return 0.0
+
+    @property
+    def device_info(self):
+        """Return device information."""
+        return {
+            "identifiers": {(DOMAIN, "axpert_inverter")},
+            "name": "Axpert Inverter",
+            "manufacturer": "Voltronic",
+            "sw_version": self.coordinator.firmware_version,
+        }
+
+class AxpertGridCurrentSensor(CoordinatorEntity, SensorEntity):
+    """Synthetic sensor for Real-time Grid Current (Calculated)."""
+    
+    def __init__(self, coordinator):
+        super().__init__(coordinator)
+        self._attr_name = "Grid Current"
+        self._attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
+        self._attr_device_class = SensorDeviceClass.CURRENT
+        self._attr_unique_id = "axpert_grid_current"
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_icon = "mdi:transmission-tower"
+
+    @property
+    def native_value(self):
+        # P_grid = P_load + P_charge - P_discharge - P_pv
+        # I_grid = P_grid / V_grid
+        
+        try:
+            # Get values (default to 0.0)
+            p_load = float(self.coordinator.data.get("ac_output_active_power", 0))
+            
+            batt_v = float(self.coordinator.data.get("battery_voltage", 0))
+            batt_chg_i = float(self.coordinator.data.get("battery_charging_current", 0))
+            p_charge = batt_v * batt_chg_i
+            
+            batt_dis_i = float(self.coordinator.data.get("battery_discharge_current", 0))
+            p_discharge = batt_v * batt_dis_i
+            
+            pv_v = float(self.coordinator.data.get("pv_input_voltage", 0))
+            pv_i = float(self.coordinator.data.get("pv_input_current", 0))
+            p_pv = pv_v * pv_i
+            
+            p_grid = p_load + p_charge - p_discharge - p_pv
+            
+            v_grid = float(self.coordinator.data.get("grid_voltage", 0))
+            
+            if v_grid < 10:
+                # No grid
+                return 0.0
+                
+            i_grid = p_grid / v_grid
+            
+            # Clamp to 0 if negative (exporting? or just noise/imprecision)
+            # Some inverters export, but usually Axpert doesn't support grid tie in this mode.
+            if i_grid < 0:
+                i_grid = 0.0
+                
+            return round(i_grid, 1)
+
+        except (ValueError, TypeError):
+            return 0.0
+
+    @property
+    def device_info(self):
+        """Return device information."""
+        return {
+            "identifiers": {(DOMAIN, "axpert_inverter")},
+            "name": "Axpert Inverter",
+            "manufacturer": "Voltronic",
             "sw_version": self.coordinator.firmware_version,
         }

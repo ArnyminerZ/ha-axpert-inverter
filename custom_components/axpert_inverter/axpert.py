@@ -180,48 +180,5 @@ class AxpertInverter:
         except Exception:
             return "Unknown"
 
-    def get_rated_information(self) -> dict:
-        """Get Device Rated Information (QPIRI)."""
-        raw = self.send_command("QPIRI")
-        if not raw:
-            return {}
-        
-        parts = raw.split()
-        if len(parts) < 20: 
-             _LOGGER.warning(f"QPIRI response too short: {raw}")
-             return {}
 
-        try:
-            # Mapping based on common protocol documentation
-            data = {
-                "grid_rating_voltage": float(parts[0]),
-                "grid_rating_current": float(parts[1]),
-                "ac_output_rating_voltage": float(parts[2]),
-                "ac_output_rating_frequency": float(parts[3]),
-                "ac_output_rating_current": float(parts[4]),
-                "ac_output_rating_apparent_power": int(parts[5]),
-                "ac_output_rating_active_power": int(parts[6]),
-                "battery_rating_voltage": float(parts[7]),
-                "battery_recharge_voltage": float(parts[8]),
-                "battery_under_voltage": float(parts[9]),
-                "battery_bulk_voltage": float(parts[10]),
-                "battery_float_voltage": float(parts[11]),
-                "battery_type": int(parts[12]),
-                "current_max_ac_charging_current": int(parts[13]),
-                "current_max_charging_current": int(parts[14]),
-                "input_voltage_range": int(parts[15]),
-                "output_source_priority": int(parts[16]),
-                "charger_source_priority": int(parts[17]),
-                "parallel_max_num": int(parts[18]),
-                "machine_type": int(parts[19]),
-                "topology": int(parts[20]),
-                "output_mode": int(parts[21]),
-                "battery_redischarge_voltage": float(parts[22]),
-                "pv_ok_condition": int(parts[23]),
-                "pv_power_balance": int(parts[24]) if len(parts) > 24 else 0
-            }
-            return data
-        except (ValueError, IndexError) as e:
-            _LOGGER.error(f"Error parsing QPIRI data: {e} | Raw: {raw}")
-            return {}
 
