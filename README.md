@@ -18,22 +18,28 @@ This custom component integrates Axpert Inverters directly into Home Assistant v
 - **Diagnostics**:
     - Reports Inverter Firmware Version.
 
-## Installation
-
-### 1. Prepare the Device
+## Prerequisites
+### Prepare the Device
 Ensure your Home Assistant host has access to the inverter's USB port.
 - If using Docker, map the device: `--device /dev/hidraw0:/dev/hidraw0`.
 - Stop any other services using the port (e.g., `mppsolar` container).
 
-### 2. Copy Files
-Copy the `custom_components/axpert_inverter` directory into your Home Assistant's `config/custom_components/` folder.
+## Installation
 
-```bash
-cp -r custom_components/axpert_inverter /config/custom_components/
-```
+### Option 1: HACS (Recommended)
+1.  Open **HACS** in Home Assistant.
+2.  Go to **Integrations** > **Three dots (top right)** > **Custom repositories**.
+3.  Add the URL of this repository and select **Integration** as the category.
+4.  Click **ADD**.
+5.  Find **Axpert Inverter** in the list and click **Download**.
+6.  Restart Home Assistant.
 
-### 3. Restart
-Restart Home Assistant to load the new component.
+### Option 2: Manual Installation
+1.  Copy the `custom_components/axpert_inverter` directory into your Home Assistant's `config/custom_components/` folder.
+    ```bash
+    cp -r custom_components/axpert_inverter /config/custom_components/
+    ```
+2.  Restart Home Assistant.
 
 ## Configuration
 
