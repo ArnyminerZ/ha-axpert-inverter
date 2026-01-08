@@ -105,7 +105,7 @@ class AxpertInverter:
                     decoded_response = decoded_response[:-2]
                 
                 if '(NAK' in decoded_response or decoded_response == 'NAK':
-                    raise Exception("Command not supported")
+                    raise Exception(f"Command \"{command}\" not supported")
                 
                 _LOGGER.debug(f'Response from inverter: {decoded_response}')
                 
