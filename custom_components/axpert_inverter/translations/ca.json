@@ -25,6 +25,21 @@
                     "only_solar": "Només solar"
                 }
             }
+        },
+        "sensor": {
+            "inverter_status": {
+                "name": "Estat de l'Inversor",
+                "state": {
+                    "standby": "En espera",
+                    "charging_ac": "Carregant (Xarxa)",
+                    "charging_solar": "Carregant (Solar)",
+                    "charging_solar_and_ac": "Carregant (Solar + Xarxa)",
+                    "discharging": "Descarregant",
+                    "load_on_charging_ac": "Mode Línia (Carregant Xarxa)",
+                    "load_on_charging_solar": "Mode Línia (Carregant Solar)",
+                    "load_on_charging_solar_and_ac": "Mode Línia (Carregant Solar + Xarxa)"
+                }
+            }
         }
     }
 }

@@ -25,6 +25,21 @@
                     "only_solar": "Only solar"
                 }
             }
+        },
+        "sensor": {
+            "inverter_status": {
+                "name": "Inverter Status",
+                "state": {
+                    "standby": "Standby",
+                    "charging_ac": "Charging (AC)",
+                    "charging_solar": "Charging (Solar)",
+                    "charging_solar_and_ac": "Charging (Solar + AC)",
+                    "discharging": "Discharging",
+                    "load_on_charging_ac": "Line Mode (Charging AC)",
+                    "load_on_charging_solar": "Line Mode (Charging Solar)",
+                    "load_on_charging_solar_and_ac": "Line Mode (Charging Solar + AC)"
+                }
+            }
         }
     }
 }

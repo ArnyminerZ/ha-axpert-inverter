@@ -17,6 +17,7 @@ from homeassistant.const import (
     UnitOfEnergy,
     UnitOfTemperature,
     PERCENTAGE,
+    EntityCategory,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -57,6 +58,8 @@ async def async_setup_entry(
         AxpertOutputCurrentSensor(coordinator),
         # Real-time Grid Current Sensor (Calculated)
         AxpertGridCurrentSensor(coordinator),
+        # Inverter Status
+        AxpertStatusSensor(coordinator),
     ]
     
     # Energy Sensors (Integration)
@@ -301,6 +304,80 @@ class AxpertGridCurrentSensor(CoordinatorEntity, SensorEntity):
     @property
     def device_info(self):
         """Return device information."""
+        return {
+            "identifiers": {(DOMAIN, "axpert_inverter")},
+            "name": "Axpert Inverter",
+            "manufacturer": "Voltronic",
+            "sw_version": self.coordinator.firmware_version,
+        }
+
+class AxpertStatusSensor(CoordinatorEntity, SensorEntity):
+    """Sensor for Inverter Status (Enum)."""
+    
+    _attr_has_entity_name = True
+    _attr_translation_key = "inverter_status"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_options = [
+        "standby",
+        "charging_ac",
+        "charging_solar",
+        "charging_solar_and_ac",
+        "discharging",
+        "load_on_charging_ac",
+        "load_on_charging_solar",
+        "load_on_charging_solar_and_ac",
+    ]
+
+    def __init__(self, coordinator):
+        super().__init__(coordinator)
+        self._attr_unique_id = "axpert_inverter_status"
+
+    @property
+    def native_value(self):
+        status = self.coordinator.data.get("status_binary", "")
+        if len(status) < 8:
+            return None
+        
+        # Mapping based on Axpert Protocol
+        # b7 b6 b5 b4 b3 b2 b1 b0 (String indices: 01234567)
+        # b4: Index 3 (Load Status)
+        # b2: Index 5 (Charging Status)
+        # b1: Index 6 (SCC Charging)
+        # b0: Index 7 (AC Charging)
+
+        load_on = status[3] == '1'
+        charging = status[5] == '1'
+        scc_charging = status[6] == '1'
+        ac_charging = status[7] == '1'
+        
+        if load_on:
+            if charging:
+                if scc_charging and ac_charging:
+                    return "load_on_charging_solar_and_ac"
+                elif scc_charging:
+                    return "load_on_charging_solar"
+                elif ac_charging:
+                    return "load_on_charging_ac"
+                else:
+                    return "discharging" # Should not happen if charging bit is 1, but fallback
+            else:
+                return "discharging"
+        else:
+            if charging:
+                if scc_charging and ac_charging:
+                    return "charging_solar_and_ac"
+                elif scc_charging:
+                    return "charging_solar"
+                elif ac_charging:
+                    return "charging_ac"
+                else:
+                     return "standby" # Fallback
+            else:
+                 return "standby"
+
+    @property
+    def device_info(self):
         return {
             "identifiers": {(DOMAIN, "axpert_inverter")},
             "name": "Axpert Inverter",
