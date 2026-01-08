@@ -13,35 +13,38 @@ from .coordinator import AxpertDataUpdateCoordinator
 
 # QPIWS Response Mapping (Index -> Translation Key & Name suffix)
 WARNING_MAPPING = {
-    0: ("inverter_fault", "Inverter Fault"),
-    1: ("bus_over", "Bus Over"),
-    2: ("bus_under", "Bus Under"),
-    3: ("bus_soft_fail", "Bus Soft Fail"),
-    4: ("line_fail", "Line Fail"),
-    5: ("opv_short", "OPV Short"),
-    6: ("inverter_voltage_too_low", "Inverter Voltage Too Low"),
-    7: ("inverter_voltage_too_high", "Inverter Voltage Too High"),
-    8: ("over_temperature", "Over Temperature"),
-    9: ("fan_locked", "Fan Locked"),
-    10: ("battery_voltage_high", "Battery Voltage High"),
-    11: ("battery_low_alarm", "Battery Low Alarm"),
-    # 12 is Reserved
-    13: ("battery_under_shutdown", "Battery Under Shutdown"),
-    # 14 is Reserved
-    15: ("over_load", "Over Load"),
-    16: ("eeprom_fault", "EEPROM Fault"),
-    17: ("inverter_over_current", "Inverter Over Current"),
-    18: ("inverter_soft_fail", "Inverter Soft Fail"),
-    19: ("self_test_fail", "Self Test Fail"),
-    20: ("op_dc_voltage_over", "OP DC Voltage Over"),
-    21: ("battery_open", "Battery Open"),
-    22: ("current_sensor_fail", "Current Sensor Fail"),
-    23: ("battery_short", "Battery Short"),
-    24: ("power_limit", "Power Limit"),
-    25: ("pv_voltage_high", "PV Voltage High"),
-    26: ("mppt_overload", "MPPT Overload"),
-    27: ("mppt_over_temperature", "MPPT Over Temperature"),
-    28: ("battery_too_low_to_charge", "Battery Too Low To Charge"),
+    # 0: reserved
+    1: ("inverter_fault", "Inverter Fault"),
+    2: ("bus_over", "Bus Over"),
+    3: ("bus_under", "Bus Under"),
+    4: ("bus_soft_fail", "Bus Soft Fail"),
+    5: ("line_fail", "Line Fail"),
+    6: ("opv_short", "OPV Short"),
+    7: ("inverter_voltage_too_low", "Inverter Voltage Too Low"),
+    8: ("inverter_voltage_too_high", "Inverter Voltage Too High"),
+    9: ("over_temperature", "Over Temperature"),
+    10: ("fan_locked", "Fan Locked"),
+    11: ("battery_voltage_high", "Battery Voltage High"),
+    12: ("battery_low_alarm", "Battery Low Alarm"),
+    # 13 is Reserved
+    14: ("battery_under_shutdown", "Battery Under Shutdown"),
+    # 15 is Reserved
+    16: ("over_load", "Over Load"),
+    17: ("eeprom_fault", "EEPROM Fault"),
+    18: ("inverter_over_current", "Inverter Over Current"),
+    19: ("inverter_soft_fail", "Inverter Soft Fail"),
+    20: ("self_test_fail", "Self Test Fail"),
+    21: ("op_dc_voltage_over", "OP DC Voltage Over"),
+    22: ("battery_open", "Battery Open"),
+    23: ("current_sensor_fail", "Current Sensor Fail"),
+    24: ("battery_short", "Battery Short"),
+    25: ("power_limit", "Power Limit"),
+    26: ("pv_voltage_high", "PV Voltage High"),
+    27: ("mppt_overload", "MPPT Overload"),
+    28: ("mppt_over_temperature", "MPPT Over Temperature"),
+    29: ("battery_too_low_to_charge", "Battery Too Low To Charge"),
+    # 30: reserved
+    # 31: reserved
 }
 
 async def async_setup_entry(
