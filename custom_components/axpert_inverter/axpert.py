@@ -120,6 +120,8 @@ class AxpertInverter:
                     if attempt == 1:
                         _LOGGER.error(f"Failed to communicate with inverter after retries: {e}")
                         raise e
+                    else:
+                        _LOGGER.warning(f"Failed to communicate with inverter: {e}")
                     if fd is not None:
                         os.close(fd)
                         fd = None
