@@ -2,6 +2,7 @@ import logging
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -88,7 +89,7 @@ class AxpertOutputPrioritySelect(CoordinatorEntity, SelectEntity):
         self._attr_translation_key = "output_source_priority"
         self._attr_unique_id = "axpert_output_priority"
         self._attr_options = list(self.OPTIONS_MAP.keys())
-        self._attr_entity_category = "config"
+        self._attr_entity_category = EntityCategory.CONFIG
 
     @property
     def current_option(self) -> str | None:
@@ -143,7 +144,7 @@ class AxpertChargerPrioritySelect(CoordinatorEntity, SelectEntity):
         self._attr_translation_key = "charger_source_priority"
         self._attr_unique_id = "axpert_charger_priority"
         self._attr_options = list(self.OPTIONS_MAP.keys())
-        self._attr_entity_category = "config"
+        self._attr_entity_category = EntityCategory.CONFIG
 
     @property
     def current_option(self) -> str | None:
