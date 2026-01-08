@@ -41,5 +41,88 @@
                 }
             }
         }
+    },
+    "binary_sensor": {
+        "inverter_fault": {
+            "name": "Fallada de l'Inversor"
+        },
+        "bus_over": {
+            "name": "Bus Sobrecarregat"
+        },
+        "bus_under": {
+            "name": "Bus Baix"
+        },
+        "bus_soft_fail": {
+            "name": "Fallada Suau de Bus"
+        },
+        "line_fail": {
+            "name": "Fallada de Línia"
+        },
+        "opv_short": {
+            "name": "Curtcircuit OPV"
+        },
+        "inverter_voltage_too_low": {
+            "name": "Voltatge Inversor Massa Baix"
+        },
+        "inverter_voltage_too_high": {
+            "name": "Voltatge Inversor Massa Alt"
+        },
+        "over_temperature": {
+            "name": "Sobretemperatura"
+        },
+        "fan_locked": {
+            "name": "Ventilador Bloquejat"
+        },
+        "battery_voltage_high": {
+            "name": "Voltatge Bateria Alt"
+        },
+        "battery_low_alarm": {
+            "name": "Alarma Bateria Baixa"
+        },
+        "battery_under_shutdown": {
+            "name": "Apagat per Bateria Baixa"
+        },
+        "over_load": {
+            "name": "Sobrecàrrega"
+        },
+        "eeprom_fault": {
+            "name": "Fallada EEPROM"
+        },
+        "inverter_over_current": {
+            "name": "Sobreintensitat Inversor"
+        },
+        "inverter_soft_fail": {
+            "name": "Fallada Suau Inversor"
+        },
+        "self_test_fail": {
+            "name": "Fallada Auto-test"
+        },
+        "op_dc_voltage_over": {
+            "name": "Sobretensió DC OP"
+        },
+        "battery_open": {
+            "name": "Bateria Oberta"
+        },
+        "current_sensor_fail": {
+            "name": "Fallada Sensor Corrent"
+        },
+        "battery_short": {
+            "name": "Curtcircuit Bateria"
+        },
+        "power_limit": {
+            "name": "Límit de Potència"
+        },
+        "pv_voltage_high": {
+            "name": "Voltatge PV Alt"
+        },
+        "mppt_overload": {
+            "name": "Sobrecàrrega MPPT"
+        },
+        "mppt_over_temperature": {
+            "name": "Sobretemperatura MPPT"
+        },
+        "battery_too_low_to_charge": {
+            "name": "Bateria Massa Baixa per Carregar"
+        }
     }
 }
