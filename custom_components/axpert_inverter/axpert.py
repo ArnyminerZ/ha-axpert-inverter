@@ -185,6 +185,14 @@ class AxpertInverter:
             _LOGGER.error(f"Error parsing QPIGS data: {e} | Raw: {raw}")
             return {}
 
+    def get_warnings(self) -> str:
+        """Get warning status (QPIWS)."""
+        try:
+            return self.send_command("QPIWS")
+        except Exception as e:
+            _LOGGER.error(f"Error getting warnings: {e}")
+            return ""
+
     def get_mode(self) -> str:
         """Get Device Mode (QMOD)."""
         # Response: (M<CRC><cr>  where M is P, S, L, B, F, H, D

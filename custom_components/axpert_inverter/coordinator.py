@@ -43,11 +43,16 @@ class AxpertDataUpdateCoordinator(DataUpdateCoordinator):
         if not data:
             raise UpdateFailed("Received empty data from QPIGS")
             
+        # Get warnings
+        warnings = self.inverter.get_warnings()
+        if warnings:
+            data["warnings"] = warnings
 
-        # Also get mode
-        # mode = self.inverter.get_mode()
-        # data["device_mode"] = mode
-        
+        # Get mode
+        mode = self.inverter.get_mode()
+        if mode:
+            data["mode"] = mode
+
         # Get QPIRI for selectors
         qpiri_data = self.inverter.get_rated_information()
         if qpiri_data:
