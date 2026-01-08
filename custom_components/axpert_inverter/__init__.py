@@ -43,12 +43,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         command = call.data.get("command")
         if command:
             try:
+                _LOGGER.debug(f"Sending command: {command}")
                 response = await hass.async_add_executor_job(inverter.send_command, command)
                 _LOGGER.info(f"Command '{command}' response: {response}")
                 return {"response": response}
             except Exception as e:
                 _LOGGER.error(f"Command failed: {e}")
                 raise e
+        else:
+            raise ValueError("No command provided")
 
     hass.services.async_register(DOMAIN, "send_command", handle_send_command)
 
