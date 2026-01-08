@@ -127,8 +127,8 @@ class AxpertInverter:
         # 000.0 00.0 230.0 50.0 0046 0002 000 371 53.20 001 080 0026 0001 089.9 53.13 00000 00110110 ...
         parts = raw.split()
         if len(parts) < 16: # Need at least up to status
-             _LOGGER.warning(f"QPIGS response too short: {raw}")
-             return {}
+            _LOGGER.warning(f"QPIGS response too short: {raw}")
+            return {}
         
         try:
             data = {
