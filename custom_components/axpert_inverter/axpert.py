@@ -48,6 +48,7 @@ class AxpertInverter:
                 
                 # Write command
                 # For HID devices, we might need to write in chunks or just once.
+                _LOGGER.debug(f'Sending command: {command}')
                 os.write(fd, full_command)
                 time.sleep(0.1) # Wait a bit for processing
 
@@ -102,6 +103,8 @@ class AxpertInverter:
                     # Let's be careful. The split logic below handles it by grabbing specific indices.
                     # But the last field might be corrupt.
                     decoded_response = decoded_response[:-2]
+                
+                _LOGGER.debug(f'Response from inverter: {decoded_response}')
                 
                 return decoded_response
 
@@ -158,7 +161,7 @@ class AxpertInverter:
             # 19: PV Charging Power (MMMMM)
             
             if len(parts) > 19:
-                 data["pv_charging_power"] = int(parts[19])
+                data["pv_charging_power"] = int(parts[19])
             
             return data
         except (ValueError, IndexError) as e:
