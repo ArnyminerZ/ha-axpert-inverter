@@ -4,6 +4,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse
+from homeassistant.exceptions import ServiceValidationError, HomeAssistantError
 from homeassistant.helpers.typing import ConfigType
 
 from .axpert import AxpertInverter
@@ -48,8 +49,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 _LOGGER.info(f"Command '{command}' response: {response}")
                 return {"response": response}
             except Exception as e:
+                err_msg = str(e)
+                if "not supported" in err_msg:
+                    raise ServiceValidationError(f"Command '{command}' is not supported by this inverter.")
                 _LOGGER.error(f"Command failed: {e}")
-                raise e
+                raise HomeAssistantError(f"Command failed: {e}")
         else:
             raise ValueError("No command provided")
 
