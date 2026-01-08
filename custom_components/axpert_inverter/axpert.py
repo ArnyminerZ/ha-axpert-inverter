@@ -148,8 +148,18 @@ class AxpertInverter:
                 "pv_input_voltage": float(parts[13]), # 089.9
                 "scc_voltage": float(parts[14]), # 53.13
                 "battery_discharge_current": int(parts[15]), # 00000
-                "status_binary": parts[16] # 00110110
+                "status_binary": parts[16], # 00110110
             }
+            
+            # Additional fields (not present in all firmwares)
+            # ... QQ VV MMMMM ...
+            # 17: Battery voltage offset?
+            # 18: EEPROM version?
+            # 19: PV Charging Power (MMMMM)
+            
+            if len(parts) > 19:
+                 data["pv_charging_power"] = int(parts[19])
+            
             return data
         except (ValueError, IndexError) as e:
             _LOGGER.error(f"Error parsing QPIGS data: {e} | Raw: {raw}")
@@ -179,6 +189,3 @@ class AxpertInverter:
             return raw
         except Exception:
             return "Unknown"
-
-
-

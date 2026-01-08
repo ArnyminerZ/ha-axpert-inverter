@@ -107,6 +107,10 @@ class AxpertPVSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def native_value(self):
+        # Prefer direct reading from inverter if available
+        if "pv_charging_power" in self.coordinator.data:
+            return float(self.coordinator.data["pv_charging_power"])
+
         v = self.coordinator.data.get("pv_input_voltage", 0)
         a = self.coordinator.data.get("pv_input_current", 0)
         return round(float(v) * float(a), 1)
@@ -164,9 +168,12 @@ class AxpertEnergySensor(CoordinatorEntity, RestoreEntity, SensorEntity):
         # Get power value
         current_power = 0.0
         if self._source_key == "pv_power":
-            v = self.coordinator.data.get("pv_input_voltage", 0)
-            a = self.coordinator.data.get("pv_input_current", 0)
-            current_power = float(v) * float(a)
+            if "pv_charging_power" in self.coordinator.data:
+                current_power = float(self.coordinator.data["pv_charging_power"])
+            else:
+                v = self.coordinator.data.get("pv_input_voltage", 0)
+                a = self.coordinator.data.get("pv_input_current", 0)
+                current_power = float(v) * float(a)
         else:
             current_power = float(self.coordinator.data.get(self._source_key, 0))
             
