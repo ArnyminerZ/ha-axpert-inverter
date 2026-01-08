@@ -37,87 +37,98 @@ class AxpertInverter:
             if time_since_last < 0.5:
                 time.sleep(0.5 - time_since_last)
 
-            fd = None
-            try:
-                # Open device for reading and writing, non-blocking
-                fd = os.open(self._device_path, os.O_RDWR | os.O_NONBLOCK)
-                
-                # Prepare command
-                crc = self._get_crc(command)
-                full_command = command.encode() + crc + b'\r'
-                
-                # Write command
-                # For HID devices, we might need to write in chunks or just once.
-                _LOGGER.debug(f'Sending command: {command}')
-                os.write(fd, full_command)
-                time.sleep(0.1) # Wait a bit for processing
-
-                # Read response
-                response = b""
-                retries = 10
-                while retries > 0:
-                    try:
-                        chunk = os.read(fd, 256)
-                        if chunk:
-                            response += chunk
-                            if b'\r' in response:
-                                break
-                        else:
+            for attempt in range(2):
+                fd = None
+                try:
+                    # Open device for reading and writing, non-blocking
+                    fd = os.open(self._device_path, os.O_RDWR | os.O_NONBLOCK)
+                    
+                    # Prepare command
+                    crc = self._get_crc(command)
+                    full_command = command.encode() + crc + b'\r'
+                    
+                    # Write command
+                    # For HID devices, we might need to write in chunks or just once.
+                    _LOGGER.debug(f'Sending command: {command}')
+                    os.write(fd, full_command)
+                    time.sleep(0.1) # Wait a bit for processing
+    
+                    # Read response
+                    response = b""
+                    retries = 10
+                    while retries > 0:
+                        try:
+                            chunk = os.read(fd, 256)
+                            if chunk:
+                                response += chunk
+                                if b'\r' in response:
+                                    break
+                            else:
+                                time.sleep(0.1)
+                                retries -= 1
+                        except BlockingIOError:
                             time.sleep(0.1)
                             retries -= 1
-                    except BlockingIOError:
-                        time.sleep(0.1)
-                        retries -= 1
-                    except Exception as e:
-                        _LOGGER.error(f"Error reading from device: {e}")
-                        break
-                
-                if not response:
-                    raise Exception("No response from inverter")
-
-                # Remove CRC and CR
-                # Response format: (Response<CRC><cr>
-                # Check CRC (Optional for now, but good practice)
-                # For simplicity, we just return the decoded string minus CRC/CR
-                
-                try:
-                    # Decode with ignore to handle garbage bytes
-                    decoded_response = response.decode('iso-8859-1', errors='ignore')
+                        except Exception as e:
+                            _LOGGER.error(f"Error reading from device: {e}")
+                            break
                     
-                    # Strip null bytes and whitespace
-                    decoded_response = decoded_response.replace('\x00', '').strip()
-                except Exception:
-                     decoded_response = response.decode('utf-8', errors='ignore').replace('\x00', '').strip()
-
-                # Find the start of the response (usually '(')
-                if '(' in decoded_response:
-                    decoded_response = decoded_response[decoded_response.find('(')+1:]
-                
-                # Basic cleanup of CRC chars (last 2 chars usually)
-                # Some responses might still have them attached
-                if len(decoded_response) > 2:
-                    # In strict mode we would check CRC. 
-                    # Here we just want to ensure we don't have trailing garbage.
-                    # The split() in QPIGS handles trailing CRC if it's attached to the last field
-                    # but usually it's better to slice it off if we are sure.
-                    # Let's be careful. The split logic below handles it by grabbing specific indices.
-                    # But the last field might be corrupt.
-                    decoded_response = decoded_response[:-2]
-                
-                if '(NAK' in decoded_response or decoded_response == 'NAK':
-                    raise Exception(f"Command \"{command}\" not supported")
-                
-                _LOGGER.debug(f'Response from inverter: {decoded_response}')
-                
-                return decoded_response
-
-            except Exception as e:
-                _LOGGER.error(f"Failed to communicate with inverter: {e}")
-                raise e
-            finally:
-                if fd is not None:
-                    os.close(fd)
-                self._last_command_time = time.time()
+                    if not response:
+                        raise Exception("No response from inverter")
+    
+                    # Remove CRC and CR
+                    # Response format: (Response<CRC><cr>
+                    # Check CRC (Optional for now, but good practice)
+                    # For simplicity, we just return the decoded string minus CRC/CR
+                    
+                    try:
+                        # Decode with ignore to handle garbage bytes
+                        decoded_response = response.decode('iso-8859-1', errors='ignore')
+                        
+                        # Strip null bytes and whitespace
+                        decoded_response = decoded_response.replace('\x00', '').strip()
+                    except Exception:
+                         decoded_response = response.decode('utf-8', errors='ignore').replace('\x00', '').strip()
+    
+                    # Find the start of the response (usually '(')
+                    if '(' in decoded_response:
+                        decoded_response = decoded_response[decoded_response.find('(')+1:]
+                    
+                    # Basic cleanup of CRC chars (last 2 chars usually)
+                    # Some responses might still have them attached
+                    if len(decoded_response) > 2:
+                        # In strict mode we would check CRC. 
+                        # Here we just want to ensure we don't have trailing garbage.
+                        # The split() in QPIGS handles trailing CRC if it's attached to the last field
+                        # but usually it's better to slice it off if we are sure.
+                        # Let's be careful. The split logic below handles it by grabbing specific indices.
+                        # But the last field might be corrupt.
+                        decoded_response = decoded_response[:-2]
+                    
+                    if '(NAK' in decoded_response or decoded_response == 'NAK':
+                        if attempt == 0:
+                            _LOGGER.warning(f"Got NAK for command {command}, retrying in 1s...")
+                            time.sleep(1)
+                            continue
+                        raise Exception(f"Command \"{command}\" not supported")
+                    
+                    _LOGGER.debug(f'Response from inverter: {decoded_response}')
+                    
+                    return decoded_response
+    
+                except Exception as e:
+                    if attempt == 1:
+                        _LOGGER.error(f"Failed to communicate with inverter after retries: {e}")
+                        raise e
+                    if fd is not None:
+                        os.close(fd)
+                        fd = None
+                    # Wait a bit before retry?
+                    time.sleep(0.5)
+                finally:
+                    if fd is not None:
+                        os.close(fd)
+                    self._last_command_time = time.time()
 
     def get_general_status(self) -> dict:
         """Get general status parameters (QPIGS)."""
