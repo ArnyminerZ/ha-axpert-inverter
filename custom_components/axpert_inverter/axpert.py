@@ -163,7 +163,8 @@ class AxpertInverter:
             # 18: EEPROM version?
             # 19: PV Charging Power (MMMMM)
             
-            if len(parts) > 19:
+            if len(parts) > 16:
+                # Supports extended QPIGS
                 data["pv_charging_power"] = int(parts[19])
             
             return data
