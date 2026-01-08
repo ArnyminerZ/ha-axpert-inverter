@@ -1,0 +1,30 @@
+{
+    "entity": {
+        "select": {
+            "ac_input_range": {
+                "name": "AC Input Range",
+                "state": {
+                    "appliance": "Appliance (Generator)",
+                    "ups": "UPS (Grid)"
+                }
+            },
+            "output_source_priority": {
+                "name": "Output Source Priority",
+                "state": {
+                    "utility_first": "Utility first (USB)",
+                    "solar_first": "Solar first (SUB)",
+                    "sbu_priority": "SBU priority (SBU)"
+                }
+            },
+            "charger_source_priority": {
+                "name": "Charger Source Priority",
+                "state": {
+                    "utility_first": "Utility first",
+                    "solar_first": "Solar first",
+                    "solar_and_utility": "Solar + Utility",
+                    "only_solar": "Only solar"
+                }
+            }
+        }
+    }
+}

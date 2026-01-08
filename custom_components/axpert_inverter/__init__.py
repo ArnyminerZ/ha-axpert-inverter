@@ -3,7 +3,7 @@ import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse
 from homeassistant.helpers.typing import ConfigType
 
 from .axpert import AxpertInverter
@@ -53,7 +53,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         else:
             raise ValueError("No command provided")
 
-    hass.services.async_register(DOMAIN, "send_command", handle_send_command)
+    hass.services.async_register(
+        DOMAIN, "send_command", handle_send_command, supports_response=SupportsResponse.OPTIONAL
+    )
 
     return True
 

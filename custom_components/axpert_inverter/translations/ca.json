@@ -1,0 +1,30 @@
+{
+    "entity": {
+        "select": {
+            "ac_input_range": {
+                "name": "Rang d'Entrada CA",
+                "state": {
+                    "appliance": "Electrodomèstic (Generador)",
+                    "ups": "SAI (Xarxa)"
+                }
+            },
+            "output_source_priority": {
+                "name": "Prioritat de Font de Sortida",
+                "state": {
+                    "utility_first": "Xarxa primer (USB)",
+                    "solar_first": "Solar primer (SUB)",
+                    "sbu_priority": "Prioritat SBU (SBU)"
+                }
+            },
+            "charger_source_priority": {
+                "name": "Prioritat de Font de Càrrega",
+                "state": {
+                    "utility_first": "Xarxa primer",
+                    "solar_first": "Solar primer",
+                    "solar_and_utility": "Solar + Xarxa",
+                    "only_solar": "Només solar"
+                }
+            }
+        }
+    }
+}

@@ -8,3 +8,7 @@ send_command:
       required: true
       selector:
         text:
+    response:
+      name: Response
+      description: The raw response from the inverter.
+      example: "(000.0 00.0 230.0 50.0 ..."

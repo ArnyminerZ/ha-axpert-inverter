@@ -184,6 +184,45 @@ class AxpertInverter:
         """Set AC Input Range. PGR00 or PGR01."""
         resp = self.send_command(mode_code)
         return "ACK" in resp
+        
+    def get_rated_information(self) -> dict:
+        """Get Rated Information (QPIRI)."""
+        raw = self.send_command("QPIRI")
+        if not raw:
+            return {}
+            
+        parts = raw.split()
+        if len(parts) < 17:
+             _LOGGER.warning(f"QPIRI response too short: {raw}")
+             return {}
+
+        try:
+            # According to docs:
+            # ...
+            # 16: Output Source Priority (0:Utility, 1:Solar, 2:SBU)
+            # 17: Charger Source Priority (0:Utility, 1:Solar, 2:Solar+Utility, 3:Only Solar)
+            
+            data = {}
+            if len(parts) > 16:
+                data["output_source_priority"] = parts[16]
+            
+            if len(parts) > 17:
+                data["charger_source_priority"] = parts[17]
+                
+            return data
+        except Exception as e:
+            _LOGGER.error(f"Error parsing QPIRI: {e}")
+            return {}
+
+    def set_output_source_priority(self, priority: str) -> bool:
+        """Set Output Source Priority. 00/01/02."""
+        # POP00, POP01, POP02
+        return "ACK" in self.send_command(f"POP{priority}")
+
+    def set_charger_source_priority(self, priority: str) -> bool:
+        """Set Charger Source Priority. 00/01/02/03."""
+        # PCP00, PCP01, PCP02, PCP03
+        return "ACK" in self.send_command(f"PCP{priority}")
     
     def get_firmware_version(self) -> str:
         """Get Main CPU Firmware Version (QVFW)."""

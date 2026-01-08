@@ -48,4 +48,9 @@ class AxpertDataUpdateCoordinator(DataUpdateCoordinator):
         # mode = self.inverter.get_mode()
         # data["device_mode"] = mode
         
+        # Get QPIRI for selectors
+        qpiri_data = self.inverter.get_rated_information()
+        if qpiri_data:
+            data.update(qpiri_data)
+        
         return data
