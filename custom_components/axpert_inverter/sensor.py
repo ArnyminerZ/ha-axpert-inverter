@@ -319,14 +319,12 @@ class AxpertStatusSensor(CoordinatorEntity, SensorEntity):
     _attr_device_class = SensorDeviceClass.ENUM
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_options = [
+        "power_on",
         "standby",
-        "charging_ac",
-        "charging_solar",
-        "charging_solar_and_ac",
-        "discharging",
-        "load_on_charging_ac",
-        "load_on_charging_solar",
-        "load_on_charging_solar_and_ac",
+        "line_mode",
+        "battery_mode",
+        "fault",
+        "power_saving",
     ]
 
     def __init__(self, coordinator):
@@ -335,46 +333,30 @@ class AxpertStatusSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def native_value(self):
-        status = self.coordinator.data.get("status_binary", "")
-        if len(status) < 8:
-            return None
+        mode = self.coordinator.data.get("mode", "")
         
-        # Mapping based on Axpert Protocol
-        # b7 b6 b5 b4 b3 b2 b1 b0 (String indices: 01234567)
-        # b4: Index 3 (Load Status)
-        # b2: Index 5 (Charging Status)
-        # b1: Index 6 (SCC Charging)
-        # b0: Index 7 (AC Charging)
-
-        load_on = status[3] == '1'
-        charging = status[5] == '1'
-        scc_charging = status[6] == '1'
-        ac_charging = status[7] == '1'
+        # Mapping QMOD responses
+        # P: Power On
+        # S: Standby
+        # L: Line Mode
+        # B: Battery Mode
+        # F: Fault
+        # H: Power Saving
         
-        if load_on:
-            if charging:
-                if scc_charging and ac_charging:
-                    return "load_on_charging_solar_and_ac"
-                elif scc_charging:
-                    return "load_on_charging_solar"
-                elif ac_charging:
-                    return "load_on_charging_ac"
-                else:
-                    return "discharging" # Should not happen if charging bit is 1, but fallback
-            else:
-                return "discharging"
-        else:
-            if charging:
-                if scc_charging and ac_charging:
-                    return "charging_solar_and_ac"
-                elif scc_charging:
-                    return "charging_solar"
-                elif ac_charging:
-                    return "charging_ac"
-                else:
-                     return "standby" # Fallback
-            else:
-                 return "standby"
+        if mode == "P":
+            return "power_on"
+        elif mode == "S":
+            return "standby"
+        elif mode == "L":
+            return "line_mode"
+        elif mode == "B":
+            return "battery_mode"
+        elif mode == "F":
+            return "fault"
+        elif mode == "H":
+            return "power_saving"
+        
+        return None
 
     @property
     def device_info(self):
