@@ -22,11 +22,21 @@ class AxpertInverter:
             crc ^= byte << 8
             for _ in range(8):
                 if (crc & 0x8000):
-                    crc = (crc << 1) ^ 0x1021
+                    crc = ((crc << 1) ^ 0x1021) & 0xFFFF
                 else:
-                    crc = crc << 1
+                    crc = (crc << 1) & 0xFFFF
+        
         low = crc & 0xFF
         high = (crc >> 8) & 0xFF
+
+        # Fix for control characters in CRC (from Voltronic protocol)
+        # If CRC bytes match ( (0x28), CR (0x0d), LF (0x0a), increment them
+        if low in (0x28, 0x0d, 0x0a):
+            low += 1
+        
+        if high in (0x28, 0x0d, 0x0a):
+            high += 1
+
         return bytes([high, low])
 
     def send_command(self, command: str) -> str:
