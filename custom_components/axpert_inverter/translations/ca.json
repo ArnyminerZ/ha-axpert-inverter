@@ -83,6 +83,9 @@
         }
     },
     "binary_sensor": {
+        "pv_loss": {
+            "name": "Pèrdua Solar"
+        },
         "inverter_fault": {
             "name": "Fallada de l'Inversor"
         },
@@ -122,6 +125,9 @@
         "battery_under_shutdown": {
             "name": "Apagat per Bateria Baixa"
         },
+        "battery_derating": {
+            "name": "Reducció de Potència de Bateria"
+        },
         "over_load": {
             "name": "Sobrecàrrega"
         },
@@ -155,14 +161,17 @@
         "pv_voltage_high": {
             "name": "Voltatge PV Alt"
         },
-        "mppt_overload": {
-            "name": "Sobrecàrrega MPPT"
+        "mppt_overload_fault": {
+            "name": "Fallada Sobrecàrrega MPPT"
         },
-        "mppt_over_temperature": {
-            "name": "Sobretemperatura MPPT"
+        "mppt_overload_warning": {
+            "name": "Avís Sobrecàrrega MPPT"
         },
         "battery_too_low_to_charge": {
             "name": "Bateria Massa Baixa per Carregar"
+        },
+        "dc_dc_overcurrent": {
+            "name": "Sobrecàrrega Corrent DC-DC"
         }
     }
 }

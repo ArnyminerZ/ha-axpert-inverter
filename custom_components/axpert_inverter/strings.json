@@ -82,6 +82,9 @@
             }
         },
         "binary_sensor": {
+            "pv_loss": {
+                "name": "PV Loss"
+            },
             "inverter_fault": {
                 "name": "Inverter Fault"
             },
@@ -121,6 +124,9 @@
             "battery_under_shutdown": {
                 "name": "Battery Under Shutdown"
             },
+            "battery_derating": {
+                "name": "Battery Derating"
+            },
             "over_load": {
                 "name": "Over Load"
             },
@@ -154,14 +160,17 @@
             "pv_voltage_high": {
                 "name": "PV Voltage High"
             },
-            "mppt_overload": {
-                "name": "MPPT Overload"
+            "mppt_overload_fault": {
+                "name": "MPPT Overload Fault"
             },
-            "mppt_over_temperature": {
-                "name": "MPPT Over Temperature"
+            "mppt_overload_warning": {
+                "name": "MPPT Overload Warning"
             },
             "battery_too_low_to_charge": {
                 "name": "Battery Too Low To Charge"
+            },
+            "dc_dc_overcurrent": {
+                "name": "DC-DC Overcurrent"
             }
         }
     }
