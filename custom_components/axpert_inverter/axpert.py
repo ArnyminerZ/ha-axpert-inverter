@@ -69,7 +69,7 @@ class AxpertInverter:
     
                     # Read response
                     response = b""
-                    retries = 10
+                    retries = 50 # 5 seconds timeout
                     while retries > 0:
                         try:
                             chunk = os.read(fd, 256)
