@@ -88,7 +88,7 @@ class AxpertInverter:
                         # Strip null bytes and whitespace
                         decoded_response = decoded_response.replace('\x00', '').strip()
                     except Exception:
-                         decoded_response = response.decode('utf-8', errors='ignore').replace('\x00', '').strip()
+                        decoded_response = response.decode('utf-8', errors='ignore').replace('\x00', '').strip()
     
                     # Find the start of the response (usually '(')
                     if '(' in decoded_response:
