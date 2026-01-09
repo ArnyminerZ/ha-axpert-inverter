@@ -13,7 +13,7 @@ from .coordinator import AxpertDataUpdateCoordinator
 
 # QPIWS Response Mapping (Index -> Translation Key & Name suffix)
 WARNING_MAPPING = {
-    # 0: reserved
+    0: ("pv_loss", "PV Loss"),
     1: ("inverter_fault", "Inverter Fault"),
     2: ("bus_over", "Bus Over"),
     3: ("bus_under", "Bus Under"),
@@ -28,7 +28,7 @@ WARNING_MAPPING = {
     12: ("battery_low_alarm", "Battery Low Alarm"),
     # 13 is Reserved
     14: ("battery_under_shutdown", "Battery Under Shutdown"),
-    # 15 is Reserved
+    15: ("battery_derating", "Battery Derating"),
     16: ("over_load", "Over Load"),
     17: ("eeprom_fault", "EEPROM Fault"),
     18: ("inverter_over_current", "Inverter Over Current"),
@@ -40,11 +40,10 @@ WARNING_MAPPING = {
     24: ("battery_short", "Battery Short"),
     25: ("power_limit", "Power Limit"),
     26: ("pv_voltage_high", "PV Voltage High"),
-    27: ("mppt_overload", "MPPT Overload"),
-    28: ("mppt_over_temperature", "MPPT Over Temperature"),
+    27: ("mppt_overload_fault", "MPPT Overload Fault"),
+    28: ("mppt_overload_warning", "MPPT Overload Warning"),
     29: ("battery_too_low_to_charge", "Battery Too Low To Charge"),
-    # 30: reserved
-    # 31: reserved
+    30: ("dc_dc_overcurrent", "DC-DC Overcurrent")
 }
 
 async def async_setup_entry(
