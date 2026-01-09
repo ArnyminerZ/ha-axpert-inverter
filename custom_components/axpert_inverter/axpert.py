@@ -1,9 +1,148 @@
-import logging
-import os
 import time
 import threading
+import logging
+import usb.core
+import usb.util
 
 _LOGGER = logging.getLogger(__name__)
+
+class USBConnection:
+    """Helper to handle USB connection."""
+    def __init__(self, vid=0x0665, pid=0x5161, timeout=5000):
+        self.vid = vid
+        self.pid = pid
+        self.timeout = timeout
+        self.dev = None
+        self.ep_in = None
+        self.ep_out = None
+
+    def __enter__(self):
+        self.dev = usb.core.find(idVendor=self.vid, idProduct=self.pid)
+        if self.dev is None:
+            raise ValueError(f"Device {hex(self.vid)}:{hex(self.pid)} not found")
+
+        # Helper to detach kernel driver for interface 0 (the main HID interface)
+        if self.dev.is_kernel_driver_active(0):
+            try:
+                self.dev.detach_kernel_driver(0)
+                _LOGGER.debug("Detached kernel driver from interface 0")
+            except usb.core.USBError as e:
+                _LOGGER.warning(f"Could not detach kernel driver: {e}")
+
+        # Set configuration
+        try:
+            self.dev.set_configuration()
+        except usb.core.USBError as e:
+            if e.errno == 16: # Resource busy
+                 # If we are already configured, this might happen and be okay
+                 _LOGGER.debug("Device busy during set_configuration, assuming already configured.")
+            else:
+                 _LOGGER.warning(f"Could not set configuration: {e}")
+
+        # Explicitly claim interface 0
+        try:
+            usb.util.claim_interface(self.dev, 0)
+        except usb.core.USBError as e:
+            _LOGGER.error(f"Could not claim interface 0: {e}")
+            raise e
+
+        # Iterate over all configurations/interfaces/endpoints to find the first valid pair
+        cfg = self.dev.get_active_configuration()
+        
+        for intf in cfg:
+            for ep in intf:
+                if usb.util.endpoint_direction(ep.bEndpointAddress) == usb.util.ENDPOINT_OUT:
+                    if self.ep_out is None: 
+                        self.ep_out = ep
+                elif usb.util.endpoint_direction(ep.bEndpointAddress) == usb.util.ENDPOINT_IN:
+                    if self.ep_in is None: 
+                        self.ep_in = ep
+            
+            if self.ep_out and self.ep_in:
+                break
+        
+        if not self.ep_in:
+            _LOGGER.error(f"Could not find IN endpoint. Configuration: {cfg}")
+            raise ValueError("Could not find IN endpoint")
+            
+        if not self.ep_out:
+            _LOGGER.debug("No OUT endpoint found. Will use Control Transfer (SET_REPORT) for writing.")
+        
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        try:
+            usb.util.release_interface(self.dev, 0)
+        except Exception:
+            pass
+        # Optional: Attach kernel driver back? Usually not needed for server setups.
+        # usb.util.dispose_resources(self.dev)
+
+    def write(self, data: bytes):
+        if self.ep_out:
+            # Use Interrrupt OUT
+            chunk_size = 8
+            offset = 0
+            while offset < len(data):
+                chunk = data[offset:offset+chunk_size]
+                self.ep_out.write(chunk, self.timeout)
+                offset += chunk_size
+                time.sleep(0.01)
+        else:
+            # Use Control Transfer (HID SET_REPORT)
+            # bmRequestType: 0x21 (Host to Device | Class | Interface)
+            # bRequest: 0x09 (SET_REPORT)
+            # wValue: (0x02 << 8) | 0x00 (Output Report, ID 0)
+            # wIndex: 0 (Interface 0)
+            chunk_size = 8
+            offset = 0
+            while offset < len(data):
+                chunk = data[offset:offset+chunk_size]
+                # Pad to 8 bytes if needed? Some reports require fixed size.
+                # But let's try raw chunk first.
+                
+                # Note: Some devices expect the Report ID to be prepended if it's not 0.
+                # Assuming Report ID 0.
+                
+                try:
+                    self.dev.ctrl_transfer(0x21, 0x09, 0x200, 0, chunk, self.timeout)
+                except usb.core.USBError as e:
+                    _LOGGER.error(f"Control transfer failed: {e}")
+                    raise e
+                    
+                offset += chunk_size
+                time.sleep(0.01)
+
+    def read_until(self, terminator=b'\r') -> bytes:
+        if not self.ep_in:
+            return b""
+            
+        res = b""
+        start = time.time()
+        timeout_sec = self.timeout / 1000.0
+        
+        while (time.time() - start) < timeout_sec:
+            try:
+                # Read 8 bytes (max packet size) with short timeout (100ms)
+                # This prevents blocking for full timeout if buffer isn't full
+                data = self.ep_in.read(8, 200)
+                res += bytes(data)
+                if terminator in res:
+                    break
+            except usb.core.USBError as e:
+                if e.errno == 110: # Timeout
+                    continue
+                # If "No data available" or other non-fatal error, continue
+                # _LOGGER.debug(f"USB Read Error: {e}")
+                continue
+                
+        return res
+
+    def reset_input_buffer(self):
+        pass
+
+    def reset_output_buffer(self):
+        pass
 
 class AxpertInverter:
     """Class to communicate with the Axpert Inverter via HID."""
@@ -52,40 +191,27 @@ class AxpertInverter:
                 time.sleep(0.5 - time_since_last)
 
             for attempt in range(2):
-                fd = None
                 try:
-                    # Open device for reading and writing, non-blocking
-                    fd = os.open(self._device_path, os.O_RDWR | os.O_NONBLOCK)
+                    # Open USB device
                     
-                    # Prepare command
-                    crc = self._get_crc(command)
-                    full_command = command.encode() + crc + b'\r'
-                    
-                    # Write command
-                    # For HID devices, we might need to write in chunks or just once.
-                    _LOGGER.debug(f'Sending command: {command} ({full_command})')
-                    os.write(fd, full_command)
-                    time.sleep(0.1) # Wait a bit for processing
-    
-                    # Read response
-                    response = b""
-                    retries = 100 # 10 seconds timeout
-                    while retries > 0:
-                        try:
-                            chunk = os.read(fd, 256)
-                            if chunk:
-                                response += chunk
-                                if b'\r' in response:
-                                    break
-                            else:
-                                time.sleep(0.1)
-                                retries -= 1
-                        except BlockingIOError:
-                            time.sleep(0.1)
-                            retries -= 1
-                        except Exception as e:
-                            _LOGGER.error(f"Error reading from device: {e}")
-                            break
+                    # NOTE: We ignore device_path and look for VID:PID 0665:5161
+                    with USBConnection(timeout=5000) as ser:
+                        # Prepare command
+                        crc = self._get_crc(command)
+                        full_command = command.encode() + crc + b'\r'
+                        
+                        _LOGGER.debug(f'Sending command: {command} ({full_command})')
+                        
+                        # Flush buffers
+                        ser.reset_input_buffer()
+                        ser.reset_output_buffer()
+                        
+                        # Write
+                        ser.write(full_command)
+                        
+                        # Read response until CR
+                        # This handles the loop and timeout automatically
+                        response = ser.read_until(b'\r')
                     
                     if not response:
                         raise Exception("No response from inverter")
@@ -183,14 +309,10 @@ class AxpertInverter:
                         raise e
                     else:
                         _LOGGER.warning(f"Failed to communicate with inverter: {e}")
-                    if fd is not None:
-                        os.close(fd)
-                        fd = None
-                    # Wait a bit before retry?
+                    
+                    # Wait a bit before retry
                     time.sleep(0.5)
                 finally:
-                    if fd is not None:
-                        os.close(fd)
                     self._last_command_time = time.time()
 
     def get_general_status(self) -> dict:
