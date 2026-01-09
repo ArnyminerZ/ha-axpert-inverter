@@ -48,6 +48,7 @@ async def async_setup_entry(
         AxpertSensor(coordinator, "output_load_percent", "Load Percent", PERCENTAGE, None),
         AxpertSensor(coordinator, "battery_voltage", "Battery Voltage", UnitOfElectricPotential.VOLT, SensorDeviceClass.VOLTAGE),
         AxpertSensor(coordinator, "battery_charging_current", "Battery Charging Current", UnitOfElectricCurrent.AMPERE, SensorDeviceClass.CURRENT),
+        AxpertSensor(coordinator, "battery_discharge_current", "Battery Discharging Current", UnitOfElectricCurrent.AMPERE, SensorDeviceClass.CURRENT),
         AxpertSensor(coordinator, "battery_capacity", "Battery Capacity", PERCENTAGE, SensorDeviceClass.BATTERY),
         AxpertSensor(coordinator, "heat_sink_temperature", "Inverter Temperature", UnitOfTemperature.CELSIUS, SensorDeviceClass.TEMPERATURE),
         AxpertSensor(coordinator, "pv_input_voltage", "PV Input Voltage", UnitOfElectricPotential.VOLT, SensorDeviceClass.VOLTAGE),
