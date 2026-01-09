@@ -39,20 +39,20 @@ async def async_setup_entry(
     coordinator: AxpertDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     
     entities = [
-        AxpertSensor(coordinator, "grid_voltage", "Grid Voltage", UnitOfElectricPotential.VOLT, SensorDeviceClass.VOLTAGE),
-        AxpertSensor(coordinator, "grid_frequency", "Grid Frequency", UnitOfFrequency.HERTZ, SensorDeviceClass.FREQUENCY),
-        AxpertSensor(coordinator, "ac_output_voltage", "Output Voltage", UnitOfElectricPotential.VOLT, SensorDeviceClass.VOLTAGE),
-        AxpertSensor(coordinator, "ac_output_frequency", "Output Frequency", UnitOfFrequency.HERTZ, SensorDeviceClass.FREQUENCY),
-        AxpertSensor(coordinator, "ac_output_active_power", "Output Active Power", UnitOfPower.WATT, SensorDeviceClass.POWER),
-        AxpertSensor(coordinator, "ac_output_apparent_power", "Output Apparent Power", UnitOfApparentPower.VOLT_AMPERE, SensorDeviceClass.APPARENT_POWER),
-        AxpertSensor(coordinator, "output_load_percent", "Load Percent", PERCENTAGE, None),
-        AxpertSensor(coordinator, "battery_voltage", "Battery Voltage", UnitOfElectricPotential.VOLT, SensorDeviceClass.VOLTAGE),
-        AxpertSensor(coordinator, "battery_charging_current", "Battery Charging Current", UnitOfElectricCurrent.AMPERE, SensorDeviceClass.CURRENT),
-        AxpertSensor(coordinator, "battery_discharge_current", "Battery Discharging Current", UnitOfElectricCurrent.AMPERE, SensorDeviceClass.CURRENT),
-        AxpertSensor(coordinator, "battery_capacity", "Battery Capacity", PERCENTAGE, SensorDeviceClass.BATTERY),
-        AxpertSensor(coordinator, "heat_sink_temperature", "Inverter Temperature", UnitOfTemperature.CELSIUS, SensorDeviceClass.TEMPERATURE),
-        AxpertSensor(coordinator, "pv_input_voltage", "PV Input Voltage", UnitOfElectricPotential.VOLT, SensorDeviceClass.VOLTAGE),
-        AxpertSensor(coordinator, "pv_input_current", "PV Input Current", UnitOfElectricCurrent.AMPERE, SensorDeviceClass.CURRENT),
+        AxpertSensor(coordinator, "grid_voltage", UnitOfElectricPotential.VOLT, SensorDeviceClass.VOLTAGE),
+        AxpertSensor(coordinator, "grid_frequency", UnitOfFrequency.HERTZ, SensorDeviceClass.FREQUENCY),
+        AxpertSensor(coordinator, "ac_output_voltage", UnitOfElectricPotential.VOLT, SensorDeviceClass.VOLTAGE),
+        AxpertSensor(coordinator, "ac_output_frequency", UnitOfFrequency.HERTZ, SensorDeviceClass.FREQUENCY),
+        AxpertSensor(coordinator, "ac_output_active_power", UnitOfPower.WATT, SensorDeviceClass.POWER),
+        AxpertSensor(coordinator, "ac_output_apparent_power", UnitOfApparentPower.VOLT_AMPERE, SensorDeviceClass.APPARENT_POWER),
+        AxpertSensor(coordinator, "output_load_percent", PERCENTAGE, None),
+        AxpertSensor(coordinator, "battery_voltage", UnitOfElectricPotential.VOLT, SensorDeviceClass.VOLTAGE),
+        AxpertSensor(coordinator, "battery_charging_current", UnitOfElectricCurrent.AMPERE, SensorDeviceClass.CURRENT),
+        AxpertSensor(coordinator, "battery_discharge_current", UnitOfElectricCurrent.AMPERE, SensorDeviceClass.CURRENT),
+        AxpertSensor(coordinator, "battery_capacity", PERCENTAGE, SensorDeviceClass.BATTERY),
+        AxpertSensor(coordinator, "heat_sink_temperature", UnitOfTemperature.CELSIUS, SensorDeviceClass.TEMPERATURE),
+        AxpertSensor(coordinator, "pv_input_voltage", UnitOfElectricPotential.VOLT, SensorDeviceClass.VOLTAGE),
+        AxpertSensor(coordinator, "pv_input_current", UnitOfElectricCurrent.AMPERE, SensorDeviceClass.CURRENT),
         # Synthetic PV Power Sensor
         AxpertPVSensor(coordinator),
         # Real-time Output Current Sensor (Calculated)
@@ -72,11 +72,13 @@ async def async_setup_entry(
 class AxpertSensor(CoordinatorEntity, SensorEntity):
     """Representation of an Axpert Sensor."""
 
-    def __init__(self, coordinator, key, name, unit, device_class):
+    _attr_has_entity_name = True
+
+    def __init__(self, coordinator, key, unit, device_class):
         """Initialize."""
         super().__init__(coordinator)
         self._key = key
-        self._attr_name = name
+        self._attr_translation_key = key
         self._attr_native_unit_of_measurement = unit
         self._attr_device_class = device_class
         self._attr_unique_id = f"axpert_{key}"

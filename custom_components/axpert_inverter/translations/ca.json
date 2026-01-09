@@ -37,6 +37,48 @@
                     "fault": "Fallada",
                     "power_saving": "Estalvi d'Energia"
                 }
+            },
+            "grid_voltage": {
+                "name": "Voltatge de Xarxa"
+            },
+            "grid_frequency": {
+                "name": "Freqüència de Xarxa"
+            },
+            "ac_output_voltage": {
+                "name": "Voltatge de Sortida"
+            },
+            "ac_output_frequency": {
+                "name": "Freqüència de Sortida"
+            },
+            "ac_output_active_power": {
+                "name": "Potència Activa de Sortida"
+            },
+            "ac_output_apparent_power": {
+                "name": "Potència Aparent de Sortida"
+            },
+            "output_load_percent": {
+                "name": "Percentatge de Càrrega"
+            },
+            "battery_voltage": {
+                "name": "Voltatge de Bateria"
+            },
+            "battery_charging_current": {
+                "name": "Corrent de Càrrega de Bateria"
+            },
+            "battery_discharge_current": {
+                "name": "Corrent de Descàrrega de Bateria"
+            },
+            "battery_capacity": {
+                "name": "Capacitat de Bateria"
+            },
+            "heat_sink_temperature": {
+                "name": "Temperatura de l'Inversor"
+            },
+            "pv_input_voltage": {
+                "name": "Voltatge d'Entrada PV"
+            },
+            "pv_input_current": {
+                "name": "Corrent d'Entrada PV"
             }
         }
     },

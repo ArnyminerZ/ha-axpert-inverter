@@ -37,6 +37,48 @@
                     "fault": "Fault",
                     "power_saving": "Power Saving"
                 }
+            },
+            "grid_voltage": {
+                "name": "Grid Voltage"
+            },
+            "grid_frequency": {
+                "name": "Grid Frequency"
+            },
+            "ac_output_voltage": {
+                "name": "Output Voltage"
+            },
+            "ac_output_frequency": {
+                "name": "Output Frequency"
+            },
+            "ac_output_active_power": {
+                "name": "Output Active Power"
+            },
+            "ac_output_apparent_power": {
+                "name": "Output Apparent Power"
+            },
+            "output_load_percent": {
+                "name": "Load Percent"
+            },
+            "battery_voltage": {
+                "name": "Battery Voltage"
+            },
+            "battery_charging_current": {
+                "name": "Battery Charging Current"
+            },
+            "battery_discharge_current": {
+                "name": "Battery Discharging Current"
+            },
+            "battery_capacity": {
+                "name": "Battery Capacity"
+            },
+            "heat_sink_temperature": {
+                "name": "Inverter Temperature"
+            },
+            "pv_input_voltage": {
+                "name": "PV Input Voltage"
+            },
+            "pv_input_current": {
+                "name": "PV Input Current"
             }
         },
         "binary_sensor": {
