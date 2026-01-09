@@ -27,6 +27,7 @@ class AxpertDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
         )
         self.firmware_version = None
+        self.model_id = None
         self.model_name = None
 
     async def _async_update_data(self):
