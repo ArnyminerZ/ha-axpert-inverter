@@ -96,14 +96,8 @@ class AxpertInverter:
                     
                     # Basic cleanup of CRC chars (last 2 chars usually)
                     # Some responses might still have them attached
-                    if len(decoded_response) > 2:
-                        # In strict mode we would check CRC. 
-                        # Here we just want to ensure we don't have trailing garbage.
-                        # The split() in QPIGS handles trailing CRC if it's attached to the last field
-                        # but usually it's better to slice it off if we are sure.
-                        # Let's be careful. The split logic below handles it by grabbing specific indices.
-                        # But the last field might be corrupt.
-                        decoded_response = decoded_response[:-2]
+                    # But we shouldn't blindly remove them as it breaks short responses like ACK
+                    decoded_response = decoded_response.strip()
                     
                     if '(NAK' in decoded_response or decoded_response == 'NAK':
                         if attempt == 0:
