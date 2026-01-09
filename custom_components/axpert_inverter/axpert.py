@@ -14,10 +14,14 @@ class AxpertInverter:
         self._lock = threading.Lock()
         self._last_command_time = 0
 
-    def _get_crc(self, cmd: str) -> bytes:
+    def _get_crc(self, cmd: str | bytes) -> bytes:
         """Calculate CRC16-XMODEM."""
         crc = 0
-        da = bytearray(cmd, 'utf8')
+        if isinstance(cmd, str):
+            da = bytearray(cmd, 'utf8')
+        else:
+            da = bytearray(cmd)
+        
         for byte in da:
             crc ^= byte << 8
             for _ in range(8):
@@ -59,7 +63,7 @@ class AxpertInverter:
                     
                     # Write command
                     # For HID devices, we might need to write in chunks or just once.
-                    _LOGGER.debug(f'Sending command: {command}')
+                    _LOGGER.debug(f'Sending command: {command} ({full_command})')
                     os.write(fd, full_command)
                     time.sleep(0.1) # Wait a bit for processing
     
@@ -86,36 +90,89 @@ class AxpertInverter:
                     if not response:
                         raise Exception("No response from inverter")
     
-                    # Remove CRC and CR
-                    # Response format: (Response<CRC><cr>
-                    # Check CRC (Optional for now, but good practice)
-                    # For simplicity, we just return the decoded string minus CRC/CR
+                    # Process response bytes (before decoding)
+                    # Strip trailing CR
+                    if response.endswith(b'\r'):
+                        response = response[:-1]
                     
-                    try:
-                        # Decode with ignore to handle garbage bytes
-                        decoded_response = response.decode('iso-8859-1', errors='ignore')
-                        
-                        # Strip null bytes and whitespace
-                        decoded_response = decoded_response.replace('\x00', '').strip()
-                    except Exception:
-                        decoded_response = response.decode('utf-8', errors='ignore').replace('\x00', '').strip()
-    
-                    # Find the start of the response (usually '(')
-                    if '(' in decoded_response:
-                        decoded_response = decoded_response[decoded_response.find('(')+1:]
-                    
-                    # Basic cleanup of CRC chars (last 2 chars usually)
-                    # Some responses might still have them attached
-                    # But we shouldn't blindly remove them as it breaks short responses like ACK
-                    decoded_response = decoded_response.strip()
-                    
-                    if '(NAK' in decoded_response or decoded_response == 'NAK':
+                    # Check for ACK/NAK (simple cases)
+                    if response == b'(ACK' or response == b'ACK':
+                        return 'ACK'
+                    if response == b'(NAK' or response == b'NAK':
                         if attempt == 0:
                             _LOGGER.warning(f"Got NAK for command {command}, retrying in 1s...")
                             time.sleep(1)
                             continue
                         raise Exception(f"Command \"{command}\" not supported")
+
+                    # Extract CRC and Data
+                    # Format: (DATA<CRC>
+                    # CRC is last 2 bytes
                     
+                    # Valid characters in response: A-Z, 0-9, space, ., -, (, :
+                    # We use this to help separate CRC from data if there is trailing garbage
+                    valid_chars = set(b"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 (.-:")
+                    
+                    if len(response) > 2:
+                        # Strategy 1: Standard Split (Last 2 bytes are CRC)
+                        std_data = response[:-2]
+                        std_crc_received = response[-2:]
+                        std_crc_calc = self._get_crc(std_data)
+                        
+                        if std_crc_calc == std_crc_received:
+                            # Perfect match, use it
+                            raw_data = std_data
+                        else:
+                            # Strategy 2: Smart Scan
+                            # Check if the standard split failed because of trailing garbage?
+                            # Or because of corruption?
+                            # We scan for a valid data prefix that checksums correctly.
+                            
+                            found_smart = False
+                            # We iterate backwards from len-2 down to 0? Or forwards?
+                            # Usually data is long, garbage is short.
+                            # But valid chars might mask CRC. 
+                            # Let's check prefixes that consist ONLY of valid chars.
+                            
+                            # Optimized scan: Only check split points where data bytes are all valid
+                            # But checking all bytes repeatedly is slow.
+                            # Just check if std_data was all valid. If so, and CRC failed, maybe actual data is shorter?
+                            # Scan from length 1 to len-2
+                            
+                            for i in range(len(response)-2, 0, -1):
+                                candidate_data = response[:i]
+                                # Check if ALL chars in candidate are valid
+                                # This filter is crucial to avoid matching random binary data
+                                if all(b in valid_chars for b in candidate_data):
+                                    candidate_crc = response[i:i+2]
+                                    if self._get_crc(candidate_data) == candidate_crc:
+                                        # Found a match!
+                                        _LOGGER.debug(f"Smart CRC scan recovered data for {command}. Garbage detected at end of response.")
+                                        raw_data = candidate_data
+                                        found_smart = True
+                                        break
+                                        
+                            if not found_smart:
+                                _LOGGER.warning(f"CRC mismatch for {command}: Recv {std_crc_received.hex()} vs Calc {std_crc_calc.hex()}. Smart scan failed to recover.")
+                                # Fallback to standard split even if invalid, as we can't do better
+                                raw_data = std_data
+
+                    else:
+                        raw_data = response
+
+                    try:
+                        # Decode with ignore to handle garbage bytes
+                        decoded_response = raw_data.decode('iso-8859-1', errors='ignore')
+                        
+                        # Strip null bytes and whitespace (if any left)
+                        decoded_response = decoded_response.replace('\x00', '').strip()
+                    except Exception:
+                        decoded_response = raw_data.decode('utf-8', errors='ignore').replace('\x00', '').strip()
+
+                    # Find the start of the response (usually '(')
+                    if '(' in decoded_response:
+                        decoded_response = decoded_response[decoded_response.find('(')+1:]
+
                     _LOGGER.debug(f'Response from inverter: {decoded_response}')
                     
                     return decoded_response
@@ -258,5 +315,66 @@ class AxpertInverter:
             if "VERFW:" in raw:
                 return raw.split("VERFW:")[1]
             return raw
+        except Exception:
+            return "Unknown"
+
+    def get_model_name(self) -> str:
+        """Get Model Name (QGMN)."""
+        try:
+            raw = self.send_command("QGMN")
+            # Raw response is usually (NNN, e.g., (001.
+            # Clean it up
+            code = raw.replace('(', '').strip()
+            
+            # Mapping from protocol documentation
+            mapping = {
+                "001": "VP-5000",
+                "002": "VM-5000",
+                "003": "VP-3000",
+                "004": "VM-3000",
+                "005": "MKS+-2000-48-LV-LY",
+                "006": "Axpert MLV 3K-24",
+                "007": "Axpert PLV 3K-24",
+                "008": "Axpert MKS 3KP",
+                "009": "Axpert KS 3KP",
+                "010": "Axpert MKS 5KP",
+                "011": "Axpert KS 5KP",
+                "012": "Axpert MKS 4K/5K 64VDC",
+                "013": "Axpert KS 4K/5K 64VDC",
+                "014": "Axpert MKS 4K/5K",
+                "015": "Axpert KS 4K/5K",
+                "016": "ALFA M-5000",
+                "017": "ALFA P-5000",
+                "018": "Axpert Plus Duo/Tri 5KVA",
+                "019": "Axpert EPS 5KW",
+                "020": "Axpert EPS M-5KW",
+                "021": "Axpert EPS 33-5KW",
+                "022": "Axpert MKS II 5KW",
+                "023": "AXPERT KING 5KW",
+                "024": "AXPERT KING 3KW",
+                "025": "APT MKS II 5KW (Feed-in grid)",
+                "026": "Axpert MLV 5KW-48V",
+                "027": "AXPERT VMIII",
+                "028": "APT VMIII 3.2KW (Feed-in grid)",
+                "029": "AXPERT VMII",
+                "030": "Fusion VMII (Feed-in grid)",
+                "031": "Phocos MKS II 5KW",
+                "032": "Axpert MKS Zero LV 0.7KW",
+                "033": "Axpert MKS Zero LV 1.4KW",
+                "034": "Axpert MKS Zero LV 2.6KW",
+                "035": "AXPERT KING 5KW (Energy)",
+                "036": "AXPERT KING 3KW (Energy)",
+                "037": "AXPERT VMIII (Energy)",
+                "038": "Phocos MKS II 5KW (Energy)",
+                "039": "Phocos MKS II 5KW LV",
+                "040": "Axpert SE 3.5K",
+                "041": "Axpert SE 5.5K",
+                "042": "AXPERT MKS III 5KW",
+                "043": "MAX 3.6K",
+                "044": "MAX 7.2K",
+                "045": "MAX 5K LV",
+            }
+            
+            return mapping.get(code, code)
         except Exception:
             return "Unknown"

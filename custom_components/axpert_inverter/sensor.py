@@ -93,7 +93,7 @@ class AxpertSensor(CoordinatorEntity, SensorEntity):
             "identifiers": {(DOMAIN, "axpert_inverter")},
             "name": "Axpert Inverter",
             "manufacturer": "Voltronic",
-            "model": "Axpert",
+            "model": self.coordinator.model_name or "Axpert",
             "sw_version": self.coordinator.firmware_version,
         }
 
@@ -125,7 +125,7 @@ class AxpertPVSensor(CoordinatorEntity, SensorEntity):
             "identifiers": {(DOMAIN, "axpert_inverter")},
             "name": "Axpert Inverter",
             "manufacturer": "Voltronic",
-            "model": "Axpert",
+            "model": self.coordinator.model_name or "Axpert",
             "sw_version": self.coordinator.firmware_version,
         }
 
@@ -206,7 +206,7 @@ class AxpertEnergySensor(CoordinatorEntity, RestoreEntity, SensorEntity):
             "identifiers": {(DOMAIN, "axpert_inverter")},
             "name": "Axpert Inverter",
             "manufacturer": "Voltronic",
-            "model": "Axpert",
+            "model": self.coordinator.model_name or "Axpert",
             "sw_version": self.coordinator.firmware_version,
         }
 
@@ -246,6 +246,7 @@ class AxpertOutputCurrentSensor(CoordinatorEntity, SensorEntity):
             "identifiers": {(DOMAIN, "axpert_inverter")},
             "name": "Axpert Inverter",
             "manufacturer": "Voltronic",
+            "model": self.coordinator.model_name or "Axpert",
             "sw_version": self.coordinator.firmware_version,
         }
 
@@ -308,6 +309,7 @@ class AxpertGridCurrentSensor(CoordinatorEntity, SensorEntity):
             "identifiers": {(DOMAIN, "axpert_inverter")},
             "name": "Axpert Inverter",
             "manufacturer": "Voltronic",
+            "model": self.coordinator.model_name or "Axpert",
             "sw_version": self.coordinator.firmware_version,
         }
 
@@ -364,5 +366,6 @@ class AxpertStatusSensor(CoordinatorEntity, SensorEntity):
             "identifiers": {(DOMAIN, "axpert_inverter")},
             "name": "Axpert Inverter",
             "manufacturer": "Voltronic",
+            "model": self.coordinator.model_name or "Axpert",
             "sw_version": self.coordinator.firmware_version,
         }

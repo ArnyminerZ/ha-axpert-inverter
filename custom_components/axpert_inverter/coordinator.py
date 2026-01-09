@@ -27,6 +27,7 @@ class AxpertDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
         )
         self.firmware_version = None
+        self.model_name = None
 
     async def _async_update_data(self):
         """Update data via library."""
@@ -39,6 +40,13 @@ class AxpertDataUpdateCoordinator(DataUpdateCoordinator):
 
     def _io_update(self):
         """Synchronous update logic."""
+        # Fetch static data if not present
+        if not self.firmware_version:
+            self.firmware_version = self.inverter.get_firmware_version()
+            
+        if not self.model_name:
+            self.model_name = self.inverter.get_model_name()
+
         data = self.inverter.get_general_status()
         if not data:
             raise UpdateFailed("Received empty data from QPIGS")
