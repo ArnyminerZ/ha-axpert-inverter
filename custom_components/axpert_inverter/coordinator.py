@@ -43,7 +43,10 @@ class AxpertDataUpdateCoordinator(DataUpdateCoordinator):
         # Fetch static data if not present
         if not self.firmware_version:
             self.firmware_version = self.inverter.get_firmware_version()
-            
+        
+        if not self.model_id:
+            self.model_id = self.inverter.get_model_id()
+        
         if not self.model_name:
             self.model_name = self.inverter.get_model_name()
 

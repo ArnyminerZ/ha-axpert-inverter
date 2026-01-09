@@ -440,10 +440,19 @@ class AxpertInverter:
         except Exception:
             return "Unknown"
 
-    def get_model_name(self) -> str:
+    def get_model_id(self) -> str | None:
+        """Get Model Name ID (QGMN)."""
+        try:
+            return self.send_command("QGMN")
+        except Exception:
+            return None
+
+    def get_model_name(self) -> str | None:
         """Get Model Name (QGMN)."""
         try:
-            raw = self.send_command("QGMN")
+            raw = self.get_model_id()
+            if not raw: return None
+            
             # Raw response is usually (NNN, e.g., (001.
             # Clean it up
             code = raw.replace('(', '').strip()
@@ -499,4 +508,4 @@ class AxpertInverter:
             
             return mapping.get(code, code)
         except Exception:
-            return "Unknown"
+            return None
