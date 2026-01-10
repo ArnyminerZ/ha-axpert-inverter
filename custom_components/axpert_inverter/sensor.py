@@ -28,6 +28,7 @@ import homeassistant.util.dt as dt_util
 
 from .const import DOMAIN
 from .coordinator import AxpertDataUpdateCoordinator
+from .entity import AxpertEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -73,7 +74,7 @@ async def async_setup_entry(
 
     async_add_entities(entities)
 
-class AxpertSensor(CoordinatorEntity, SensorEntity):
+class AxpertSensor(AxpertEntity, SensorEntity):
     """Representation of an Axpert Sensor."""
 
     _attr_has_entity_name = True
@@ -93,19 +94,7 @@ class AxpertSensor(CoordinatorEntity, SensorEntity):
         """Return the state of the sensor."""
         return self.coordinator.data.get(self._key)
 
-    @property
-    def device_info(self):
-        """Return device information."""
-        return {
-            "identifiers": {(DOMAIN, "axpert_inverter")},
-            "name": "Axpert Inverter",
-            "manufacturer": "Voltronic",
-            "model": self.coordinator.model_name,
-            "model_id": self.coordinator.model_id,
-            "sw_version": self.coordinator.firmware_version,
-        }
-
-class AxpertPVSensor(CoordinatorEntity, SensorEntity):
+class AxpertPVSensor(AxpertEntity, SensorEntity):
     """Synthetic sensor for PV Power (V * A)."""
     
     def __init__(self, coordinator):
@@ -126,19 +115,7 @@ class AxpertPVSensor(CoordinatorEntity, SensorEntity):
         a = self.coordinator.data.get("pv_input_current", 0)
         return round(float(v) * float(a), 1)
 
-    @property
-    def device_info(self):
-        """Return device information."""
-        return {
-            "identifiers": {(DOMAIN, "axpert_inverter")},
-            "name": "Axpert Inverter",
-            "manufacturer": "Voltronic",
-            "model": self.coordinator.model_name,
-            "model_id": self.coordinator.model_id,
-            "sw_version": self.coordinator.firmware_version,
-        }
-
-class AxpertEnergySensor(CoordinatorEntity, RestoreEntity, SensorEntity):
+class AxpertEnergySensor(AxpertEntity, RestoreEntity, SensorEntity):
     """Sensor that integrates power over time to calculate energy (kWh)."""
     
     def __init__(self, coordinator, key, name, source_key):
@@ -207,20 +184,8 @@ class AxpertEnergySensor(CoordinatorEntity, RestoreEntity, SensorEntity):
     @property
     def native_value(self):
         return round(self._state, 2)
-    
-    @property
-    def device_info(self):
-        """Return device information."""
-        return {
-            "identifiers": {(DOMAIN, "axpert_inverter")},
-            "name": "Axpert Inverter",
-            "manufacturer": "Voltronic",
-            "model": self.coordinator.model_name,
-            "model_id": self.coordinator.model_id,
-            "sw_version": self.coordinator.firmware_version,
-        }
 
-class AxpertOutputCurrentSensor(CoordinatorEntity, SensorEntity):
+class AxpertOutputCurrentSensor(AxpertEntity, SensorEntity):
     """Synthetic sensor for Output Current (Apparent Power / Voltage)."""
     
     def __init__(self, coordinator):
@@ -249,19 +214,7 @@ class AxpertOutputCurrentSensor(CoordinatorEntity, SensorEntity):
         except (ValueError, TypeError):
             return 0.0
 
-    @property
-    def device_info(self):
-        """Return device information."""
-        return {
-            "identifiers": {(DOMAIN, "axpert_inverter")},
-            "name": "Axpert Inverter",
-            "manufacturer": "Voltronic",
-            "model": self.coordinator.model_name,
-            "model_id": self.coordinator.model_id,
-            "sw_version": self.coordinator.firmware_version,
-        }
-
-class AxpertGridCurrentSensor(CoordinatorEntity, SensorEntity):
+class AxpertGridCurrentSensor(AxpertEntity, SensorEntity):
     """Synthetic sensor for Real-time Grid Current (Calculated)."""
     
     def __init__(self, coordinator):
@@ -313,19 +266,7 @@ class AxpertGridCurrentSensor(CoordinatorEntity, SensorEntity):
         except (ValueError, TypeError):
             return 0.0
 
-    @property
-    def device_info(self):
-        """Return device information."""
-        return {
-            "identifiers": {(DOMAIN, "axpert_inverter")},
-            "name": "Axpert Inverter",
-            "manufacturer": "Voltronic",
-            "model": self.coordinator.model_name,
-            "model_id": self.coordinator.model_id,
-            "sw_version": self.coordinator.firmware_version,
-        }
-
-class AxpertStatusSensor(CoordinatorEntity, SensorEntity):
+class AxpertStatusSensor(AxpertEntity, SensorEntity):
     """Sensor for Inverter Status (Enum)."""
     
     _attr_has_entity_name = True
@@ -372,18 +313,7 @@ class AxpertStatusSensor(CoordinatorEntity, SensorEntity):
         
         return None
 
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "axpert_inverter")},
-            "name": "Axpert Inverter",
-            "manufacturer": "Voltronic",
-            "model": self.coordinator.model_name,
-            "model_id": self.coordinator.model_id,
-            "sw_version": self.coordinator.firmware_version,
-        }
-
-class AxpertReactivePowerSensor(CoordinatorEntity, SensorEntity):
+class AxpertReactivePowerSensor(AxpertEntity, SensorEntity):
     """Synthetic sensor for Reactive Power (VAR)."""
 
     def __init__(self, coordinator):
@@ -407,19 +337,8 @@ class AxpertReactivePowerSensor(CoordinatorEntity, SensorEntity):
             return round(math.sqrt(val), 1)
         except (ValueError, TypeError):
             return 0.0
-    
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "axpert_inverter")},
-            "name": "Axpert Inverter",
-            "manufacturer": "Voltronic",
-            "model": self.coordinator.model_name,
-            "model_id": self.coordinator.model_id,
-            "sw_version": self.coordinator.firmware_version,
-        }
 
-class AxpertPowerFactorSensor(CoordinatorEntity, SensorEntity):
+class AxpertPowerFactorSensor(AxpertEntity, SensorEntity):
     """Synthetic sensor for Power Factor (%)."""
 
     def __init__(self, coordinator):
@@ -447,14 +366,3 @@ class AxpertPowerFactorSensor(CoordinatorEntity, SensorEntity):
             return round(pf, 1)
         except (ValueError, TypeError):
             return 0.0
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "axpert_inverter")},
-            "name": "Axpert Inverter",
-            "manufacturer": "Voltronic",
-            "model": self.coordinator.model_name,
-            "model_id": self.coordinator.model_id,
-            "sw_version": self.coordinator.firmware_version,
-        }

@@ -10,6 +10,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import AxpertDataUpdateCoordinator
+from .entity import AxpertEntity
 
 # QPIWS Response Mapping (Index -> Translation Key & Name suffix)
 WARNING_MAPPING = {
@@ -61,7 +62,7 @@ async def async_setup_entry(
         
     async_add_entities(entities)
 
-class AxpertWarningSensor(CoordinatorEntity, BinarySensorEntity):
+class AxpertWarningSensor(AxpertEntity, BinarySensorEntity):
     """Binary sensor for Axpert warnings."""
     
     _attr_has_entity_name = True
@@ -86,15 +87,3 @@ class AxpertWarningSensor(CoordinatorEntity, BinarySensorEntity):
             return None
             
         return warnings[self._index] == '1'
-
-    @property
-    def device_info(self):
-        """Return device information."""
-        return {
-            "identifiers": {(DOMAIN, "axpert_inverter")},
-            "name": "Axpert Inverter",
-            "manufacturer": "Voltronic",
-            "model": self.coordinator.model_name,
-            "model_id": self.coordinator.model_id,
-            "sw_version": self.coordinator.firmware_version,
-        }
