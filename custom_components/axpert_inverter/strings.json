@@ -79,6 +79,12 @@
             },
             "pv_input_current": {
                 "name": "PV Input Current"
+            },
+            "reactive_power": {
+                "name": "Reactive Power"
+            },
+            "power_factor": {
+                "name": "Power Factor"
             }
         },
         "binary_sensor": {

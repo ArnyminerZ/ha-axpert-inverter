@@ -79,6 +79,12 @@
             },
             "pv_input_current": {
                 "name": "Corrent d'Entrada PV"
+            },
+            "reactive_power": {
+                "name": "Potència Reactiva"
+            },
+            "power_factor": {
+                "name": "Factor de Potència"
             }
         }
     },

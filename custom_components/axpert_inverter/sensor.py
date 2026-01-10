@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+import math
 from typing import Optional, Any
 
 from homeassistant.components.sensor import (
@@ -61,6 +62,9 @@ async def async_setup_entry(
         AxpertGridCurrentSensor(coordinator),
         # Inverter Status
         AxpertStatusSensor(coordinator),
+        # Reactive Power and Power Factor
+        AxpertReactivePowerSensor(coordinator),
+        AxpertPowerFactorSensor(coordinator),
     ]
     
     # Energy Sensors (Integration)
@@ -367,6 +371,82 @@ class AxpertStatusSensor(CoordinatorEntity, SensorEntity):
             return "power_saving"
         
         return None
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "axpert_inverter")},
+            "name": "Axpert Inverter",
+            "manufacturer": "Voltronic",
+            "model": self.coordinator.model_name,
+            "model_id": self.coordinator.model_id,
+            "sw_version": self.coordinator.firmware_version,
+        }
+
+class AxpertReactivePowerSensor(CoordinatorEntity, SensorEntity):
+    """Synthetic sensor for Reactive Power (VAR)."""
+
+    def __init__(self, coordinator):
+        super().__init__(coordinator)
+        self._attr_translation_key = "reactive_power"
+        self._attr_native_unit_of_measurement = "VAR"
+        self._attr_unique_id = "axpert_reactive_power"
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_icon = "mdi:flash-outline"
+
+    @property
+    def native_value(self):
+        s = float(self.coordinator.data.get("ac_output_apparent_power", 0))
+        p = float(self.coordinator.data.get("ac_output_active_power", 0))
+        
+        # Q = sqrt(S^2 - P^2)
+        try:
+            # Precision issues might make P > S slightly, causing domain error.
+            val = s**2 - p**2
+            if val < 0: val = 0
+            return round(math.sqrt(val), 1)
+        except (ValueError, TypeError):
+            return 0.0
+    
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "axpert_inverter")},
+            "name": "Axpert Inverter",
+            "manufacturer": "Voltronic",
+            "model": self.coordinator.model_name,
+            "model_id": self.coordinator.model_id,
+            "sw_version": self.coordinator.firmware_version,
+        }
+
+class AxpertPowerFactorSensor(CoordinatorEntity, SensorEntity):
+    """Synthetic sensor for Power Factor (%)."""
+
+    def __init__(self, coordinator):
+        super().__init__(coordinator)
+        self._attr_translation_key = "power_factor"
+        self._attr_native_unit_of_measurement = PERCENTAGE
+        self._attr_device_class = SensorDeviceClass.POWER_FACTOR
+        self._attr_unique_id = "axpert_power_factor"
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_icon = "mdi:angle-acute"
+
+    @property
+    def native_value(self):
+        s = float(self.coordinator.data.get("ac_output_apparent_power", 0))
+        p = float(self.coordinator.data.get("ac_output_active_power", 0))
+
+        try:
+            if s == 0:
+                return 0.0
+            
+            pf = (p / s) * 100
+            # PF cannot exceed 100% technically but noise might cause it.
+            if pf > 100: pf = 100.0
+            
+            return round(pf, 1)
+        except (ValueError, TypeError):
+            return 0.0
 
     @property
     def device_info(self):
