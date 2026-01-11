@@ -118,6 +118,8 @@ class AxpertPVSensor(AxpertEntity, SensorEntity):
 class AxpertEnergySensor(AxpertEntity, RestoreEntity, SensorEntity):
     """Sensor that integrates power over time to calculate energy (kWh)."""
     
+    _MAX_INTEGRATION_INTERVAL = 300  # 5 minutes in seconds
+
     def __init__(self, coordinator, key, name, source_key):
         """Initialize."""
         super().__init__(coordinator)
@@ -131,6 +133,7 @@ class AxpertEnergySensor(AxpertEntity, RestoreEntity, SensorEntity):
         
         self._state = 0.0
         self._last_update_time = None
+        self._last_power = None
 
     async def async_added_to_hass(self):
         """Handle entity which will be added."""
@@ -148,13 +151,8 @@ class AxpertEnergySensor(AxpertEntity, RestoreEntity, SensorEntity):
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
         now = dt_util.utcnow()
-        if self._last_update_time is None:
-            self._last_update_time = now
-            return
-
-        time_diff = (now - self._last_update_time).total_seconds() / 3600.0 # Hours
         
-        # Get power value
+        # Get current power value
         current_power = 0.0
         if self._source_key == "pv_power":
             if "pv_charging_power" in self.coordinator.data:
@@ -165,20 +163,35 @@ class AxpertEnergySensor(AxpertEntity, RestoreEntity, SensorEntity):
                 current_power = float(v) * float(a)
         else:
             current_power = float(self.coordinator.data.get(self._source_key, 0))
-            
-        # Left Riemann Sum: energy += power * time_delta
-        # (Assuming power was constant since last update. Valid for small intervals)
-        # Or Trapezoidal: 0.5 * (prev_power + curr_power) * dt
-        # For simplicity and given noisy polling, Left Sum with current power is "okay", 
-        # but technically we should use previous power for Left Sum, or current for Right Sum.
-        # Let's use simple accumulation of current rate.
+
+        if self._last_update_time is None or self._last_power is None:
+            self._last_update_time = now
+            self._last_power = current_power
+            return
+
+        time_diff_seconds = (now - self._last_update_time).total_seconds()
         
-        added_energy_kwh = (current_power / 1000.0) * time_diff
+        # Gap Detection: specific logic for long outages
+        if time_diff_seconds > self._MAX_INTEGRATION_INTERVAL:
+            _LOGGER.debug(f"Time difference {time_diff_seconds}s > {self._MAX_INTEGRATION_INTERVAL}s. Skipping integration to avoid spikes.")
+            # We skip the integration for this extensive interval, 
+            # effectively assuming 0 energy was processed (or data was lost).
+            # We reset the last tracking points to now.
+            self._last_update_time = now
+            self._last_power = current_power
+            return
+
+        time_diff_hours = time_diff_seconds / 3600.0
+        
+        # Trapezoidal Rule: energy += (prev_power + curr_power) / 2 * time_delta
+        avg_power = (self._last_power + current_power) / 2.0
+        added_energy_kwh = (avg_power / 1000.0) * time_diff_hours
         
         if added_energy_kwh > 0:
             self._state += added_energy_kwh
             
         self._last_update_time = now
+        self._last_power = current_power
         self.async_write_ha_state()
 
     @property
