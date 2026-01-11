@@ -24,6 +24,31 @@
                     "solar_and_utility": "Solar + Utility",
                     "only_solar": "Only solar"
                 }
+            },
+            "battery_type": {
+                "name": "Battery Type",
+                "state": {
+                    "agm": "AGM",
+                    "flooded": "Flooded",
+                    "user": "User"
+                }
+            }
+        },
+        "number": {
+            "max_charging_current": {
+                "name": "Max Charging Current"
+            },
+            "max_utility_charging_current": {
+                "name": "Max Utility Charging Current"
+            },
+            "battery_cutoff_voltage": {
+                "name": "Battery Cut-off Voltage"
+            },
+            "battery_bulk_voltage": {
+                "name": "Battery Bulk Voltage"
+            },
+            "battery_float_voltage": {
+                "name": "Battery Float Voltage"
             }
         },
         "sensor": {

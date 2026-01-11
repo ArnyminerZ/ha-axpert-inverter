@@ -413,7 +413,38 @@ class AxpertInverter:
             
             if len(parts) > 17:
                 data["charger_source_priority"] = parts[17]
+
+            # Additional fields based on indices relative to priorities
+            # 8: Nom V
+            # 9: Cutoff V
+            # 10: Bulk V
+            # 11: Float V
+            # 12: Battery Type (0:AGM, 1:Flooded, 2:User)
+            # 13: Max AC Charging Current
+            # 14: Max Total Charging Current
+            # 15: Input Voltage Range (0:Appliance, 1:UPS)
+            
+            if len(parts) > 9:
+                data["battery_cutoff_voltage"] = float(parts[9])
+            
+            if len(parts) > 10:
+                data["battery_bulk_voltage"] = float(parts[10])
                 
+            if len(parts) > 11:
+                data["battery_float_voltage"] = float(parts[11])
+                
+            if len(parts) > 12:
+                data["battery_type"] = parts[12]
+                
+            if len(parts) > 13:
+                data["max_ac_charging_current"] = int(parts[13])
+                
+            if len(parts) > 14:
+                data["max_charging_current"] = int(parts[14])
+                
+            if len(parts) > 15:
+                data["ac_input_range"] = parts[15]
+
             return data
         except Exception as e:
             _LOGGER.error(f"Error parsing QPIRI: {e}")
@@ -429,6 +460,37 @@ class AxpertInverter:
         # PCP00, PCP01, PCP02, PCP03
         return "ACK" in self.send_command(f"PCP{priority}")
     
+    def set_max_charging_current(self, current: int) -> bool:
+        """Set Max Charging Current. MNCHGC<nnn>."""
+        # Current usually padded to 3 digits like 060
+        cmd = f"MNCHGC{current:03}"
+        return "ACK" in self.send_command(cmd)
+
+    def set_max_utility_charging_current(self, current: int) -> bool:
+        """Set Max Utility Charging Current. MUCHGC<nnn>."""
+        cmd = f"MUCHGC{current:03}"
+        return "ACK" in self.send_command(cmd)
+
+    def set_battery_type(self, batt_type: str) -> bool:
+        """Set Battery Type. PBT<nn>. 00:AGM, 01:Flooded, 02:User."""
+        cmd = f"PBT{batt_type}"
+        return "ACK" in self.send_command(cmd)
+
+    def set_battery_cutoff_voltage(self, voltage: float) -> bool:
+        """Set Battery Cut-off Voltage. PSDV<nn.n>."""
+        cmd = f"PSDV{voltage:04.1f}"
+        return "ACK" in self.send_command(cmd)
+
+    def set_battery_bulk_voltage(self, voltage: float) -> bool:
+        """Set Battery Bulk (C.V.) Voltage. PCVV<nn.n>."""
+        cmd = f"PCVV{voltage:04.1f}"
+        return "ACK" in self.send_command(cmd)
+
+    def set_battery_float_voltage(self, voltage: float) -> bool:
+        """Set Battery Float Voltage. PBFT<nn.n>."""
+        cmd = f"PBFT{voltage:04.1f}"
+        return "ACK" in self.send_command(cmd)
+
     def get_firmware_version(self) -> str:
         """Get Main CPU Firmware Version (QVFW)."""
         # Response: (VERFW:XXXXX.XX<CRC><cr> or just (VERFW:00052.30

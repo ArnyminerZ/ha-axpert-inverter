@@ -24,6 +24,31 @@
                     "solar_and_utility": "Solar + Xarxa",
                     "only_solar": "Només solar"
                 }
+            },
+            "battery_type": {
+                "name": "Tipus de Bateria",
+                "state": {
+                    "agm": "AGM",
+                    "flooded": "Flooded (Àcid)",
+                    "user": "Usuari"
+                }
+            }
+        },
+        "number": {
+            "max_charging_current": {
+                "name": "Corrent Màxima de Càrrega"
+            },
+            "max_utility_charging_current": {
+                "name": "Corrent Màxima de Càrrega de Xarxa"
+            },
+            "battery_cutoff_voltage": {
+                "name": "Voltatge de Tall de Bateria"
+            },
+            "battery_bulk_voltage": {
+                "name": "Voltatge de Càrrega Bulk (C.V.)"
+            },
+            "battery_float_voltage": {
+                "name": "Voltatge de Càrrega Flotant"
             }
         },
         "sensor": {

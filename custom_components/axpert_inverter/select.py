@@ -29,6 +29,7 @@ async def async_setup_entry(
         AxpertACInputSelect(coordinator),
         AxpertOutputPrioritySelect(coordinator),
         AxpertChargerPrioritySelect(coordinator),
+        AxpertBatteryTypeSelect(coordinator),
     ])
 
 class AxpertACInputSelect(CoordinatorEntity, SelectEntity):
@@ -59,6 +60,16 @@ class AxpertACInputSelect(CoordinatorEntity, SelectEntity):
             _LOGGER.info(f"Set AC Input Range to {option}")
         else:
             _LOGGER.error(f"Failed to set AC Input Range to {option}")
+
+    @property
+    def current_option(self) -> str | None:
+        # Check coordinator data if available
+        val = self.coordinator.data.get("ac_input_range")
+        if val == "0":
+            return OPTION_APPLIANCE
+        elif val == "1":
+            return OPTION_UPS
+        return self._attr_current_option
 
     @property
     def device_info(self):
@@ -161,6 +172,53 @@ class AxpertChargerPrioritySelect(CoordinatorEntity, SelectEntity):
         )
         if success:
             pass
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, "axpert_inverter")},
+            "name": "Axpert Inverter",
+            "manufacturer": "Voltronic",
+            "sw_version": self.coordinator.firmware_version,
+        }
+
+class AxpertBatteryTypeSelect(CoordinatorEntity, SelectEntity):
+    """Select entity for Battery Type."""
+    
+    _attr_has_entity_name = True
+
+    # 00: AGM, 01: Flooded, 02: User
+    OPTIONS_MAP = {
+        "agm": "00",
+        "flooded": "01",
+        "user": "02",
+    }
+    REVERSE_MAP = {v: k for k, v in OPTIONS_MAP.items()}
+
+    def __init__(self, coordinator):
+        super().__init__(coordinator)
+        self._attr_translation_key = "battery_type"
+        self._attr_unique_id = "axpert_battery_type"
+        self._attr_options = list(self.OPTIONS_MAP.keys())
+        self._attr_entity_category = EntityCategory.CONFIG
+
+    @property
+    def current_option(self) -> str | None:
+        val = self.coordinator.data.get("battery_type")
+        if val is not None:
+             key = str(val).zfill(2)
+             return self.REVERSE_MAP.get(key)
+        return None
+
+    async def async_select_option(self, option: str) -> None:
+        val = self.OPTIONS_MAP[option]
+        success = await self.hass.async_add_executor_job(
+            self.coordinator.inverter.set_battery_type, val
+        )
+        if not success:
+            _LOGGER.warning(f"Failed to set Battery Type to {option}")
+            self._attr_available = False
+            self.async_write_ha_state()
 
     @property
     def device_info(self):
