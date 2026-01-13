@@ -120,9 +120,6 @@ class AxpertOutputPrioritySelect(AxpertEntity, SelectEntity):
             # Wait for poll is safer but slower. 
             pass
 
-    @property
-
-
 class AxpertChargerPrioritySelect(AxpertEntity, SelectEntity):
     """Select entity for Charger Source Priority."""
     
@@ -159,8 +156,6 @@ class AxpertChargerPrioritySelect(AxpertEntity, SelectEntity):
         )
         if success:
             pass
-
-    @property
 
 
 class AxpertBatteryTypeSelect(AxpertEntity, SelectEntity):
@@ -200,6 +195,3 @@ class AxpertBatteryTypeSelect(AxpertEntity, SelectEntity):
             _LOGGER.warning(f"Failed to set Battery Type to {option}")
             self._attr_available = False
             self.async_write_ha_state()
-
-    @property
-
