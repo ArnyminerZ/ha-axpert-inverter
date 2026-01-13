@@ -98,7 +98,7 @@ class AxpertPVSensor(AxpertEntity, SensorEntity):
     """Synthetic sensor for PV Power (V * A)."""
     
     def __init__(self, coordinator):
-        super().__init__(coordinator)
+        super().__init__(coordinator, source_type="calculated")
         self._attr_name = "PV Power"
         self._attr_native_unit_of_measurement = UnitOfPower.WATT
         self._attr_device_class = SensorDeviceClass.POWER
@@ -122,7 +122,7 @@ class AxpertEnergySensor(AxpertEntity, RestoreEntity, SensorEntity):
 
     def __init__(self, coordinator, key, name, source_key):
         """Initialize."""
-        super().__init__(coordinator)
+        super().__init__(coordinator, source_type="calculated")
         self._key = key
         self._source_key = source_key
         self._attr_name = name
@@ -202,7 +202,7 @@ class AxpertOutputCurrentSensor(AxpertEntity, SensorEntity):
     """Synthetic sensor for Output Current (Apparent Power / Voltage)."""
     
     def __init__(self, coordinator):
-        super().__init__(coordinator)
+        super().__init__(coordinator, source_type="calculated")
         self._attr_name = "Output Current"
         self._attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
         self._attr_device_class = SensorDeviceClass.CURRENT
@@ -231,7 +231,7 @@ class AxpertGridCurrentSensor(AxpertEntity, SensorEntity):
     """Synthetic sensor for Real-time Grid Current (Calculated)."""
     
     def __init__(self, coordinator):
-        super().__init__(coordinator)
+        super().__init__(coordinator, source_type="calculated")
         self._attr_name = "Grid Current"
         self._attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
         self._attr_device_class = SensorDeviceClass.CURRENT
@@ -330,7 +330,7 @@ class AxpertReactivePowerSensor(AxpertEntity, SensorEntity):
     """Synthetic sensor for Reactive Power (VAR)."""
 
     def __init__(self, coordinator):
-        super().__init__(coordinator)
+        super().__init__(coordinator, source_type="calculated")
         self._attr_translation_key = "reactive_power"
         self._attr_native_unit_of_measurement = "VAR"
         self._attr_unique_id = "axpert_reactive_power"
@@ -355,7 +355,7 @@ class AxpertPowerFactorSensor(AxpertEntity, SensorEntity):
     """Synthetic sensor for Power Factor (%)."""
 
     def __init__(self, coordinator):
-        super().__init__(coordinator)
+        super().__init__(coordinator, source_type="calculated")
         self._attr_translation_key = "power_factor"
         self._attr_native_unit_of_measurement = PERCENTAGE
         self._attr_device_class = SensorDeviceClass.POWER_FACTOR

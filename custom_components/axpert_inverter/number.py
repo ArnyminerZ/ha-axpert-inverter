@@ -9,6 +9,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import AxpertDataUpdateCoordinator
+from .entity import AxpertEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ async def async_setup_entry(
     ]
     async_add_entities(entities)
 
-class AxpertNumberEntity(CoordinatorEntity, NumberEntity):
+class AxpertNumberEntity(AxpertEntity, NumberEntity):
     """Base class for Axpert number entities."""
 
     _attr_has_entity_name = True
@@ -37,15 +38,6 @@ class AxpertNumberEntity(CoordinatorEntity, NumberEntity):
 
     def __init__(self, coordinator):
         super().__init__(coordinator)
-        
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "axpert_inverter")},
-            "name": "Axpert Inverter",
-            "manufacturer": "Voltronic",
-            "sw_version": self.coordinator.firmware_version,
-        }
 
     async def _async_set_value_generic(self, func, value):
         """Generic set value helper."""

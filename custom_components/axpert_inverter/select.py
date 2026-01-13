@@ -9,6 +9,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, CMD_PGR00, CMD_PGR01
 from .coordinator import AxpertDataUpdateCoordinator
+from .entity import AxpertEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ async def async_setup_entry(
         AxpertBatteryTypeSelect(coordinator),
     ])
 
-class AxpertACInputSelect(CoordinatorEntity, SelectEntity):
+class AxpertACInputSelect(AxpertEntity, SelectEntity):
     """Select entity for AC Input Range."""
     
     _attr_has_entity_name = True
@@ -72,18 +73,9 @@ class AxpertACInputSelect(CoordinatorEntity, SelectEntity):
             return OPTION_UPS
         return self._attr_current_option
 
-    @property
-    def device_info(self):
-        """Return device information."""
-        return {
-            "identifiers": {(DOMAIN, "axpert_inverter")},
-            "name": "Axpert Inverter",
-            "manufacturer": "Voltronic",
-            "model": "Axpert",
-            "sw_version": self.coordinator.firmware_version,
-        }
 
-class AxpertOutputPrioritySelect(CoordinatorEntity, SelectEntity):
+
+class AxpertOutputPrioritySelect(AxpertEntity, SelectEntity):
     """Select entity for Output Source Priority."""
     
     _attr_has_entity_name = True
@@ -129,15 +121,9 @@ class AxpertOutputPrioritySelect(CoordinatorEntity, SelectEntity):
             pass
 
     @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "axpert_inverter")},
-            "name": "Axpert Inverter",
-            "manufacturer": "Voltronic",
-            "sw_version": self.coordinator.firmware_version,
-        }
 
-class AxpertChargerPrioritySelect(CoordinatorEntity, SelectEntity):
+
+class AxpertChargerPrioritySelect(AxpertEntity, SelectEntity):
     """Select entity for Charger Source Priority."""
     
     _attr_has_entity_name = True
@@ -175,15 +161,9 @@ class AxpertChargerPrioritySelect(CoordinatorEntity, SelectEntity):
             pass
 
     @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "axpert_inverter")},
-            "name": "Axpert Inverter",
-            "manufacturer": "Voltronic",
-            "sw_version": self.coordinator.firmware_version,
-        }
 
-class AxpertBatteryTypeSelect(CoordinatorEntity, SelectEntity):
+
+class AxpertBatteryTypeSelect(AxpertEntity, SelectEntity):
     """Select entity for Battery Type."""
     
     _attr_has_entity_name = True
@@ -222,10 +202,4 @@ class AxpertBatteryTypeSelect(CoordinatorEntity, SelectEntity):
             self.async_write_ha_state()
 
     @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "axpert_inverter")},
-            "name": "Axpert Inverter",
-            "manufacturer": "Voltronic",
-            "sw_version": self.coordinator.firmware_version,
-        }
+
