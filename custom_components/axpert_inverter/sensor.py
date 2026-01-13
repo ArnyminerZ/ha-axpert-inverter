@@ -73,9 +73,9 @@ async def async_setup_entry(
     ]
     
     # Energy Sensors (Integration)
-    entities.append(AxpertEnergySensor(coordinator, "pv_energy", "PV Energy", "pv_power"))
-    entities.append(AxpertEnergySensor(coordinator, "load_energy", "Load Energy", "ac_output_active_power"))
-    entities.append(AxpertEnergySensor(coordinator, "grid_energy", "Grid Energy", "grid_power"))
+    entities.append(AxpertEnergySensor(coordinator, "pv_energy", "pv_power"))
+    entities.append(AxpertEnergySensor(coordinator, "load_energy", "ac_output_active_power"))
+    entities.append(AxpertEnergySensor(coordinator, "grid_energy", "grid_power"))
 
     async_add_entities(entities)
 
@@ -151,12 +151,12 @@ class AxpertEnergySensor(AxpertEntity, RestoreEntity, SensorEntity):
     
     _MAX_INTEGRATION_INTERVAL = 300  # 5 minutes in seconds
 
-    def __init__(self, coordinator, key, name, source_key):
+    def __init__(self, coordinator, key, source_key):
         """Initialize."""
         super().__init__(coordinator, source_type="calculated")
         self._key = key
         self._source_key = source_key
-        self._attr_name = name
+        self._attr_translation_key = key
         self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
         self._attr_device_class = SensorDeviceClass.ENERGY
         self._attr_state_class = SensorStateClass.TOTAL_INCREASING

@@ -137,6 +137,12 @@
             "pv_input_current": {
                 "name": "PV Input Current"
             },
+            "pv_energy": {
+                "name": "PV Energy"
+            },
+            "load_energy": {
+                "name": "Load Energy"
+            },
             "reactive_power": {
                 "name": "Reactive Power"
             },
