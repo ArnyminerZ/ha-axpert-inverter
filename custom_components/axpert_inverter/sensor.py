@@ -61,6 +61,8 @@ async def async_setup_entry(
         AxpertOutputCurrentSensor(coordinator),
         # Real-time Grid Current Sensor (Calculated)
         AxpertGridCurrentSensor(coordinator),
+        # Real-time Grid Power Sensor (Calculated)
+        AxpertGridPowerSensor(coordinator),
         # Inverter Status
         AxpertStatusSensor(coordinator),
         # Reactive Power and Power Factor
@@ -275,6 +277,49 @@ class AxpertGridCurrentSensor(AxpertEntity, SensorEntity):
                 i_grid = 0.0
                 
             return round(i_grid, 1)
+
+
+        except (ValueError, TypeError):
+            return 0.0
+
+class AxpertGridPowerSensor(AxpertEntity, SensorEntity):
+    """Synthetic sensor for Real-time Grid Power (Calculated)."""
+    
+    def __init__(self, coordinator):
+        super().__init__(coordinator, source_type="calculated")
+        self._attr_name = "Grid Power"
+        self._attr_native_unit_of_measurement = UnitOfPower.WATT
+        self._attr_device_class = SensorDeviceClass.POWER
+        self._attr_unique_id = "axpert_grid_power"
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_icon = "mdi:transmission-tower"
+
+    @property
+    def native_value(self):
+        # P_grid = P_load + P_charge - P_discharge - P_pv
+        
+        try:
+            # Get values (default to 0.0)
+            p_load = float(self.coordinator.data.get("ac_output_active_power", 0))
+            
+            batt_v = float(self.coordinator.data.get("battery_voltage", 0))
+            batt_chg_i = float(self.coordinator.data.get("battery_charging_current", 0))
+            p_charge = batt_v * batt_chg_i
+            
+            batt_dis_i = float(self.coordinator.data.get("battery_discharge_current", 0))
+            p_discharge = batt_v * batt_dis_i
+            
+            pv_v = float(self.coordinator.data.get("pv_input_voltage", 0))
+            pv_i = float(self.coordinator.data.get("pv_input_current", 0))
+            p_pv = pv_v * pv_i
+            
+            p_grid = p_load + p_charge - p_discharge - p_pv
+            
+            # Clamp to 0 if negative (exporting? or just noise/imprecision)
+            if p_grid < 0:
+                p_grid = 0.0
+                
+            return round(p_grid, 1)
 
         except (ValueError, TypeError):
             return 0.0
