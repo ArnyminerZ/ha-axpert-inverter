@@ -73,6 +73,7 @@ async def async_setup_entry(
     # Energy Sensors (Integration)
     entities.append(AxpertEnergySensor(coordinator, "pv_energy", "PV Energy", "pv_power"))
     entities.append(AxpertEnergySensor(coordinator, "load_energy", "Load Energy", "ac_output_active_power"))
+    entities.append(AxpertEnergySensor(coordinator, "grid_energy", "Grid Energy", "grid_power"))
 
     async_add_entities(entities)
 
@@ -163,6 +164,26 @@ class AxpertEnergySensor(AxpertEntity, RestoreEntity, SensorEntity):
                 v = self.coordinator.data.get("pv_input_voltage", 0)
                 a = self.coordinator.data.get("pv_input_current", 0)
                 current_power = float(v) * float(a)
+        elif self._source_key == "grid_power":
+            try:
+                p_load = float(self.coordinator.data.get("ac_output_active_power", 0))
+                
+                batt_v = float(self.coordinator.data.get("battery_voltage", 0))
+                batt_chg_i = float(self.coordinator.data.get("battery_charging_current", 0))
+                p_charge = batt_v * batt_chg_i
+                
+                batt_dis_i = float(self.coordinator.data.get("battery_discharge_current", 0))
+                p_discharge = batt_v * batt_dis_i
+                
+                pv_v = float(self.coordinator.data.get("pv_input_voltage", 0))
+                pv_i = float(self.coordinator.data.get("pv_input_current", 0))
+                p_pv = pv_v * pv_i
+                
+                current_power = p_load + p_charge - p_discharge - p_pv
+                if current_power < 0:
+                    current_power = 0.0
+            except (ValueError, TypeError):
+                current_power = 0.0
         else:
             current_power = float(self.coordinator.data.get(self._source_key, 0))
 
