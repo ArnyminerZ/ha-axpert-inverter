@@ -41,8 +41,8 @@ async def async_setup_entry(
     coordinator: AxpertDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
     
     entities = [
-        AxpertSensor(coordinator, "grid_voltage", UnitOfElectricPotential.VOLT, SensorDeviceClass.VOLTAGE),
-        AxpertSensor(coordinator, "grid_frequency", UnitOfFrequency.HERTZ, SensorDeviceClass.FREQUENCY),
+        AxpertGridInputSensor(coordinator, "grid_voltage", UnitOfElectricPotential.VOLT, SensorDeviceClass.VOLTAGE),
+        AxpertGridInputSensor(coordinator, "grid_frequency", UnitOfFrequency.HERTZ, SensorDeviceClass.FREQUENCY),
         AxpertSensor(coordinator, "ac_output_voltage", UnitOfElectricPotential.VOLT, SensorDeviceClass.VOLTAGE),
         AxpertSensor(coordinator, "ac_output_frequency", UnitOfFrequency.HERTZ, SensorDeviceClass.FREQUENCY),
         AxpertSensor(coordinator, "ac_output_active_power", UnitOfPower.WATT, SensorDeviceClass.POWER),
@@ -65,6 +65,8 @@ async def async_setup_entry(
         AxpertGridPowerSensor(coordinator),
         # Inverter Status
         AxpertStatusSensor(coordinator),
+        # Machine Type
+        AxpertMachineTypeSensor(coordinator),
         # Reactive Power and Power Factor
         AxpertReactivePowerSensor(coordinator),
         AxpertPowerFactorSensor(coordinator),
@@ -96,6 +98,32 @@ class AxpertSensor(AxpertEntity, SensorEntity):
     def native_value(self):
         """Return the state of the sensor."""
         return self.coordinator.data.get(self._key)
+
+class AxpertGridInputSensor(AxpertSensor):
+    """Sensor for Grid/Generator Input (Voltage/Frequency)."""
+    
+    @property
+    def translation_key(self):
+        """Return the translation key to use for the entity."""
+        machine_type = self.coordinator.data.get("machine_type", "00")
+        base = "grid"
+        if machine_type == "01":
+            base = "generator"
+            
+        if "voltage" in self._key:
+            return f"{base}_voltage"
+        elif "frequency" in self._key:
+            return f"{base}_frequency"
+        
+        return self._key
+
+    @property
+    def icon(self):
+        """Return the icon of the entity."""
+        machine_type = self.coordinator.data.get("machine_type", "00")
+        if machine_type == "01":
+            return "mdi:generator-portable"
+        return "mdi:transmission-tower"
 
 class AxpertPVSensor(AxpertEntity, SensorEntity):
     """Synthetic sensor for PV Power (V * A)."""
@@ -137,6 +165,25 @@ class AxpertEnergySensor(AxpertEntity, RestoreEntity, SensorEntity):
         self._state = 0.0
         self._last_update_time = None
         self._last_power = None
+
+    @property
+    def translation_key(self):
+        """Return the translation key of the entity."""
+        if self._key == "grid_energy":
+            machine_type = self.coordinator.data.get("machine_type", "00")
+            if machine_type == "01":
+                return "generator_energy"
+        return self._attr_translation_key
+
+    @property
+    def icon(self):
+        """Return the icon of the entity."""
+        if self._key == "grid_energy":
+            machine_type = self.coordinator.data.get("machine_type", "00")
+            if machine_type == "01":
+                return "mdi:generator-portable"
+            return "mdi:transmission-tower"
+        return None
 
     async def async_added_to_hass(self):
         """Handle entity which will be added."""
@@ -255,12 +302,26 @@ class AxpertGridCurrentSensor(AxpertEntity, SensorEntity):
     
     def __init__(self, coordinator):
         super().__init__(coordinator, source_type="calculated")
-        self._attr_name = "Grid Current"
         self._attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
         self._attr_device_class = SensorDeviceClass.CURRENT
         self._attr_unique_id = "axpert_grid_current"
         self._attr_state_class = SensorStateClass.MEASUREMENT
-        self._attr_icon = "mdi:transmission-tower"
+
+    @property
+    def translation_key(self):
+        """Return the translation key of the entity."""
+        machine_type = self.coordinator.data.get("machine_type", "00")
+        if machine_type == "01":
+            return "generator_current"
+        return "grid_current"
+
+    @property
+    def icon(self):
+        """Return the icon of the entity."""
+        machine_type = self.coordinator.data.get("machine_type", "00")
+        if machine_type == "01":
+            return "mdi:generator-portable"
+        return "mdi:transmission-tower"
 
     @property
     def native_value(self):
@@ -299,7 +360,6 @@ class AxpertGridCurrentSensor(AxpertEntity, SensorEntity):
                 
             return round(i_grid, 1)
 
-
         except (ValueError, TypeError):
             return 0.0
 
@@ -308,12 +368,26 @@ class AxpertGridPowerSensor(AxpertEntity, SensorEntity):
     
     def __init__(self, coordinator):
         super().__init__(coordinator, source_type="calculated")
-        self._attr_name = "Grid Power"
         self._attr_native_unit_of_measurement = UnitOfPower.WATT
         self._attr_device_class = SensorDeviceClass.POWER
         self._attr_unique_id = "axpert_grid_power"
         self._attr_state_class = SensorStateClass.MEASUREMENT
-        self._attr_icon = "mdi:transmission-tower"
+
+    @property
+    def translation_key(self):
+        """Return the translation key of the entity."""
+        machine_type = self.coordinator.data.get("machine_type", "00")
+        if machine_type == "01":
+            return "generator_power"
+        return "grid_power"
+
+    @property
+    def icon(self):
+        """Return the icon of the entity."""
+        machine_type = self.coordinator.data.get("machine_type", "00")
+        if machine_type == "01":
+            return "mdi:generator-portable"
+        return "mdi:transmission-tower"
 
     @property
     def native_value(self):
@@ -344,6 +418,35 @@ class AxpertGridPowerSensor(AxpertEntity, SensorEntity):
 
         except (ValueError, TypeError):
             return 0.0
+
+class AxpertMachineTypeSensor(AxpertEntity, SensorEntity):
+    """Sensor for Machine Type (Enum)."""
+    
+    _attr_has_entity_name = True
+    _attr_translation_key = "machine_type"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_options = [
+        "grid_tie",
+        "off_grid",
+        "hybrid",
+    ]
+
+    def __init__(self, coordinator):
+        super().__init__(coordinator)
+        self._attr_unique_id = "axpert_machine_type"
+
+    @property
+    def native_value(self):
+        m_type = self.coordinator.data.get("machine_type", "")
+        if m_type == "00":
+            return "grid_tie"
+        elif m_type == "01":
+            return "off_grid"
+        elif m_type == "10":
+            return "hybrid"
+        return None
+
 
 class AxpertStatusSensor(AxpertEntity, SensorEntity):
     """Sensor for Inverter Status (Enum)."""

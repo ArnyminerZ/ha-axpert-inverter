@@ -63,11 +63,43 @@
                     "power_saving": "Estalvi d'Energia"
                 }
             },
+            "machine_type": {
+                "name": "Tipus de Màquina",
+                "state": {
+                    "grid_tie": "Xarxa (Grid Tie)",
+                    "off_grid": "Aïllada (Off Grid)",
+                    "hybrid": "Híbrid"
+                }
+            },
             "grid_voltage": {
                 "name": "Voltatge de Xarxa"
             },
             "grid_frequency": {
                 "name": "Freqüència de Xarxa"
+            },
+            "generator_voltage": {
+                "name": "Voltatge de Generador"
+            },
+            "generator_frequency": {
+                "name": "Freqüència de Generador"
+            },
+            "grid_current": {
+                "name": "Corrent de Xarxa"
+            },
+            "generator_current": {
+                "name": "Corrent de Generador"
+            },
+            "grid_power": {
+                "name": "Potència de Xarxa"
+            },
+            "generator_power": {
+                "name": "Potència de Generador"
+            },
+            "grid_energy": {
+                "name": "Energia de Xarxa"
+            },
+            "generator_energy": {
+                "name": "Energia de Generador"
             },
             "ac_output_voltage": {
                 "name": "Voltatge de Sortida"

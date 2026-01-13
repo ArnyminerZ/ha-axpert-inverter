@@ -444,6 +444,9 @@ class AxpertInverter:
                 
             if len(parts) > 15:
                 data["ac_input_range"] = parts[15]
+            
+            if len(parts) > 19:
+                data["machine_type"] = parts[19]
 
             return data
         except Exception as e:

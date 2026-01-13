@@ -63,11 +63,43 @@
                     "power_saving": "Power Saving"
                 }
             },
+            "machine_type": {
+                "name": "Machine Type",
+                "state": {
+                    "grid_tie": "Grid Tie",
+                    "off_grid": "Off Grid",
+                    "hybrid": "Hybrid"
+                }
+            },
             "grid_voltage": {
                 "name": "Grid Voltage"
             },
             "grid_frequency": {
                 "name": "Grid Frequency"
+            },
+            "generator_voltage": {
+                "name": "Generator Voltage"
+            },
+            "generator_frequency": {
+                "name": "Generator Frequency"
+            },
+            "grid_current": {
+                "name": "Grid Current"
+            },
+            "generator_current": {
+                "name": "Generator Current"
+            },
+            "grid_power": {
+                "name": "Grid Power"
+            },
+            "generator_power": {
+                "name": "Generator Power"
+            },
+            "grid_energy": {
+                "name": "Grid Energy"
+            },
+            "generator_energy": {
+                "name": "Generator Energy"
             },
             "ac_output_voltage": {
                 "name": "Output Voltage"
