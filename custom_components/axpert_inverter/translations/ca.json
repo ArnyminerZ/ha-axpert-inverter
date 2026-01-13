@@ -148,6 +148,9 @@
             },
             "power_factor": {
                 "name": "Factor de Potència"
+            },
+            "inverter_consumption": {
+                "name": "Consum de l'Inversor"
             }
         }
     },

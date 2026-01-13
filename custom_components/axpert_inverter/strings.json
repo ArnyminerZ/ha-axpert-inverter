@@ -148,6 +148,9 @@
             },
             "power_factor": {
                 "name": "Power Factor"
+            },
+            "inverter_consumption": {
+                "name": "Inverter Consumption"
             }
         },
         "binary_sensor": {

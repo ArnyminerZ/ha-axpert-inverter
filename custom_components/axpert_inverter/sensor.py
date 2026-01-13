@@ -63,6 +63,8 @@ async def async_setup_entry(
         AxpertGridCurrentSensor(coordinator),
         # Real-time Grid Power Sensor (Calculated)
         AxpertGridPowerSensor(coordinator),
+        # Inverter Consumption/Loss (Calculated)
+        AxpertInverterLossSensor(coordinator),
         # Inverter Status
         AxpertStatusSensor(coordinator),
         # Machine Type
@@ -428,6 +430,60 @@ class AxpertGridPowerSensor(AxpertEntity, SensorEntity):
                 p_grid = 0.0
                 
             return round(p_grid, 1)
+
+        except (ValueError, TypeError):
+            return 0.0
+
+class AxpertInverterLossSensor(AxpertEntity, SensorEntity):
+    """Sensor for Inverter Consumption/Loss (Calculated)."""
+    
+    _attr_has_entity_name = True
+    _attr_translation_key = "inverter_consumption"
+
+    def __init__(self, coordinator):
+        super().__init__(coordinator, source_type="calculated")
+        self._attr_native_unit_of_measurement = UnitOfPower.WATT
+        self._attr_device_class = SensorDeviceClass.POWER
+        self._attr_unique_id = "axpert_inverter_consumption"
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+
+    @property
+    def native_value(self):
+        # Loss = (P_bat_dis + P_pv) - (P_load + P_bat_chg)
+        # Only valid if calculating from DC side when Grid is not balancing the equation.
+        # But wait, standard P_grid calculation assumes Loss=0.
+        # This sensor attempts to measure loss when Grid is NOT connected (Battery Mode).
+        
+        try:
+            v_grid = float(self.coordinator.data.get("grid_voltage", 0))
+            if v_grid >= 10:
+                # In Line Mode, we can't separate Grid Power from Loss without external meter.
+                # Returning 0 effectively means "Unknown/Assumed 0"
+                return 0.0
+
+            p_load = float(self.coordinator.data.get("ac_output_active_power", 0))
+            
+            batt_v = float(self.coordinator.data.get("battery_voltage", 0))
+            batt_chg_i = float(self.coordinator.data.get("battery_charging_current", 0))
+            p_charge = batt_v * batt_chg_i
+            
+            batt_dis_i = float(self.coordinator.data.get("battery_discharge_current", 0))
+            p_discharge = batt_v * batt_dis_i
+            
+            pv_v = float(self.coordinator.data.get("pv_input_voltage", 0))
+            pv_i = float(self.coordinator.data.get("pv_input_current", 0))
+            p_pv = pv_v * pv_i
+            
+            # Loss = Power In - Power Out
+            # Power In = PV + Battery Discharge
+            # Power Out = Load + Battery Charge
+            
+            p_loss = (p_pv + p_discharge) - (p_load + p_charge)
+            
+            if p_loss < 0:
+                p_loss = 0.0
+                
+            return round(p_loss, 1)
 
         except (ValueError, TypeError):
             return 0.0
