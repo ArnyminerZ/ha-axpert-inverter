@@ -326,12 +326,20 @@ class AxpertGridCurrentSensor(AxpertEntity, SensorEntity):
     @property
     def native_value(self):
         # P_grid = P_load + P_charge - P_discharge - P_pv
-        # I_grid = P_grid / V_grid
+        # But for Current, we need Apparent Power (S).
+        # S_grid = sqrt(P_grid^2 + Q_load^2)
+        # Q_load = sqrt(S_load^2 - P_load^2)
         
         try:
             # Get values (default to 0.0)
             p_load = float(self.coordinator.data.get("ac_output_active_power", 0))
+            s_load = float(self.coordinator.data.get("ac_output_apparent_power", 0))
             
+            # Calculate Load Reactive Power (Q)
+            # Ensure safe sqrt
+            q_load_sq = max(0, (s_load ** 2) - (p_load ** 2))
+            q_load = math.sqrt(q_load_sq)
+
             batt_v = float(self.coordinator.data.get("battery_voltage", 0))
             batt_chg_i = float(self.coordinator.data.get("battery_charging_current", 0))
             p_charge = batt_v * batt_chg_i
@@ -343,7 +351,12 @@ class AxpertGridCurrentSensor(AxpertEntity, SensorEntity):
             pv_i = float(self.coordinator.data.get("pv_input_current", 0))
             p_pv = pv_v * pv_i
             
+            # Active Power Balance
             p_grid = p_load + p_charge - p_discharge - p_pv
+            
+            # Apparent Power on Grid
+            # Assuming Grid supplies all Q_load
+            s_grid = math.sqrt((p_grid ** 2) + (q_load ** 2))
             
             v_grid = float(self.coordinator.data.get("grid_voltage", 0))
             
@@ -351,11 +364,11 @@ class AxpertGridCurrentSensor(AxpertEntity, SensorEntity):
                 # No grid
                 return 0.0
                 
-            i_grid = p_grid / v_grid
+            i_grid = s_grid / v_grid
             
-            # Clamp to 0 if negative (exporting? or just noise/imprecision)
-            # Some inverters export, but usually Axpert doesn't support grid tie in this mode.
-            if i_grid < 0:
+            # Clamp to 0 if p_grid is negative (exporting) 
+            # Note: s_grid is always positive. We check p_grid to verify direction.
+            if p_grid < 0:
                 i_grid = 0.0
                 
             return round(i_grid, 1)
