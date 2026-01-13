@@ -43,6 +43,7 @@ class AxpertACInputSelect(CoordinatorEntity, SelectEntity):
         self._attr_translation_key = "ac_input_range"
         self._attr_unique_id = "axpert_ac_input_range"
         self._attr_options = OPTIONS
+        self._attr_entity_category = EntityCategory.CONFIG
         self._attr_current_option = OPTION_APPLIANCE # Default assumption
 
     async def async_select_option(self, option: str) -> None:
