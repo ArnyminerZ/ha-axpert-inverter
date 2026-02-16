@@ -75,8 +75,9 @@ class USBConnection:
             usb.util.release_interface(self.dev, 0)
         except Exception:
             pass
-        # Optional: Attach kernel driver back? Usually not needed for server setups.
-        # usb.util.dispose_resources(self.dev)
+        # Attach kernel driver back
+        if self.dev is not None:
+            usb.util.dispose_resources(self.dev)
 
     def write(self, data: bytes):
         if self.ep_out:
