@@ -2,6 +2,9 @@
 
 This custom component integrates Axpert Inverters directly into Home Assistant via USB (HID), replacing the need for external tools like `mppsolar` or MQTT bridges. It communicates directly with the inverter using the QPIGS protocol.
 
+> [!WARNING]
+> **Disclaimer:** This integration interacts directly with your hardware. Incorrect configuration or usage could potentially cause damage to your inverter or connected devices. The creators and contributors of this integration take **no responsibility** for any damage, data loss, or other issues that may arise from using this software. Use at your own risk.
+
 > [!IMPORTANT]
 > This integration is not affiliated with or endorsed by Axpert.
 > It is a completely independent project, backed up by the community, and based on official documentation, commands, and reverse engineering.
