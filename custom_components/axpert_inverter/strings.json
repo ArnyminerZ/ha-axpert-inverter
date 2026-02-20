@@ -1,4 +1,32 @@
 {
+    "config": {
+        "step": {
+            "user": {
+                "title": "Configure Axpert Inverter",
+                "data": {
+                    "device_path": "Device Path",
+                    "scan_interval": "Polling Interval (seconds)"
+                }
+            }
+        },
+        "error": {
+            "cannot_connect": "Failed to connect to the inverter"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Axpert Inverter Options",
+                "data": {
+                    "device_path": "Device Path",
+                    "scan_interval": "Polling Interval (seconds)"
+                }
+            }
+        },
+        "error": {
+            "cannot_connect": "Failed to connect to the inverter"
+        }
+    },
     "entity": {
         "select": {
             "ac_input_range": {
