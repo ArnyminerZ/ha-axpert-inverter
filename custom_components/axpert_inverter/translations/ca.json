@@ -1,4 +1,32 @@
 {
+    "config": {
+        "step": {
+            "user": {
+                "title": "Configurar Inversor Axpert",
+                "data": {
+                    "device_path": "Ruta del Dispositiu",
+                    "scan_interval": "Interval d'Actualització (segons)"
+                }
+            }
+        },
+        "error": {
+            "cannot_connect": "No s'ha pogut connectar a l'inversor"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Opcions de l'Inversor Axpert",
+                "data": {
+                    "device_path": "Ruta del Dispositiu",
+                    "scan_interval": "Interval d'Actualització (segons)"
+                }
+            }
+        },
+        "error": {
+            "cannot_connect": "No s'ha pogut connectar a l'inversor"
+        }
+    },
     "entity": {
         "select": {
             "ac_input_range": {

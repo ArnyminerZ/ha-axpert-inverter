@@ -21,10 +21,14 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Axpert Inverter from a config entry."""
-    device_path = entry.data[CONF_DEVICE_PATH]
+    # Prioritize options over data
+    device_path = entry.options.get(CONF_DEVICE_PATH, entry.data.get(CONF_DEVICE_PATH))
     
     inverter = AxpertInverter(device_path)
     coordinator = AxpertDataUpdateCoordinator(hass, inverter, entry)
+
+    # Listen for options changes
+    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
     # Fetch firmware version once at startup
     try:
@@ -69,3 +73,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN].pop(entry.entry_id)
 
     return unload_ok
+
+async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Reload config entry."""
+    await hass.config_entries.async_reload(entry.entry_id)

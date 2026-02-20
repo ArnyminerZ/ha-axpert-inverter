@@ -4,6 +4,7 @@ DOMAIN = "axpert_inverter"
 
 # Configuration
 CONF_DEVICE_PATH = "device_path"
+CONF_SCAN_INTERVAL = "scan_interval"
 DEFAULT_DEVICE_PATH = "/dev/hidraw0"
 
 # Default poll interval (seconds)
