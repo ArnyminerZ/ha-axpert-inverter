@@ -34,6 +34,7 @@ class AxpertDataUpdateCoordinator(DataUpdateCoordinator):
         self.firmware_version = None
         self.model_id = None
         self.model_name = None
+        self.rated_information = None
 
     async def _async_update_data(self):
         """Update data via library."""
@@ -56,6 +57,9 @@ class AxpertDataUpdateCoordinator(DataUpdateCoordinator):
         if not self.model_name:
             self.model_name = self.inverter.get_model_name()
 
+        if not self.rated_information:
+            self.rated_information = self.inverter.get_rated_information()
+
         data = self.inverter.get_general_status()
         if not data:
             raise UpdateFailed("Received empty data from QPIGS")
@@ -70,9 +74,8 @@ class AxpertDataUpdateCoordinator(DataUpdateCoordinator):
         if mode:
             data["mode"] = mode
 
-        # Get QPIRI for selectors
-        qpiri_data = self.inverter.get_rated_information()
-        if qpiri_data:
-            data.update(qpiri_data)
+        # Add rated information (QPIRI) for selectors
+        if self.rated_information:
+            data.update(self.rated_information)
         
         return data

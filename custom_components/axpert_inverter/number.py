@@ -47,7 +47,8 @@ class AxpertNumberEntity(AxpertEntity, NumberEntity):
             self._attr_available = False
             self.async_write_ha_state()
         else:
-            # Refresh data
+            # Invalidate cache and refresh data
+            self.coordinator.rated_information = None
             await self.coordinator.async_request_refresh()
 
 class AxpertMaxChargingCurrent(AxpertNumberEntity):

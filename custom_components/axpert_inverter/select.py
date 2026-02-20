@@ -58,7 +58,9 @@ class AxpertACInputSelect(AxpertEntity, SelectEntity):
         
         if success:
             self._attr_current_option = option
+            self.coordinator.rated_information = None
             self.async_write_ha_state()
+            await self.coordinator.async_request_refresh()
             _LOGGER.info(f"Set AC Input Range to {option}")
         else:
             _LOGGER.error(f"Failed to set AC Input Range to {option}")
@@ -116,9 +118,8 @@ class AxpertOutputPrioritySelect(AxpertEntity, SelectEntity):
             self.coordinator.inverter.set_output_source_priority, val
         )
         if success:
-            # Optimistically update? Or wait for poll.
-            # Wait for poll is safer but slower. 
-            pass
+            self.coordinator.rated_information = None
+            await self.coordinator.async_request_refresh()
 
 class AxpertChargerPrioritySelect(AxpertEntity, SelectEntity):
     """Select entity for Charger Source Priority."""
@@ -155,7 +156,8 @@ class AxpertChargerPrioritySelect(AxpertEntity, SelectEntity):
             self.coordinator.inverter.set_charger_source_priority, val
         )
         if success:
-            pass
+            self.coordinator.rated_information = None
+            await self.coordinator.async_request_refresh()
 
 
 class AxpertBatteryTypeSelect(AxpertEntity, SelectEntity):
@@ -191,7 +193,10 @@ class AxpertBatteryTypeSelect(AxpertEntity, SelectEntity):
         success = await self.hass.async_add_executor_job(
             self.coordinator.inverter.set_battery_type, val
         )
-        if not success:
+        if success:
+            self.coordinator.rated_information = None
+            await self.coordinator.async_request_refresh()
+        else:
             _LOGGER.warning(f"Failed to set Battery Type to {option}")
             self._attr_available = False
             self.async_write_ha_state()
