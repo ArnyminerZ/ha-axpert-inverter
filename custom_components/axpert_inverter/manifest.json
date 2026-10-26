@@ -1,6 +1,7 @@
 {
   "domain": "axpert_inverter",
   "name": "Axpert Inverter",
+  "categories": ["energy.solar_batteries"],
   "codeowners": [],
   "config_flow": true,
   "documentation": "https://github.com/arnyminerz/axpert-inverter",
