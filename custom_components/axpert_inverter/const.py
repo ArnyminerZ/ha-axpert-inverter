@@ -5,6 +5,12 @@ DOMAIN = "axpert_inverter"
 # Configuration
 CONF_DEVICE_PATH = "device_path"
 CONF_SCAN_INTERVAL = "scan_interval"
+CONF_BACKEND = "backend"
+CONF_DEVICE_PHYS = "device_phys"
+
+# Transports. "usb" (pyusb) is the legacy backend, kept as a fallback during the beta.
+BACKEND_HIDRAW = "hidraw"
+BACKEND_USB = "usb"
 DEFAULT_DEVICE_PATH = "/dev/hidraw0"
 
 # Default poll interval (seconds)

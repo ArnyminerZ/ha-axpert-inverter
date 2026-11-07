@@ -3,14 +3,23 @@
         "step": {
             "user": {
                 "title": "Configure Axpert Inverter",
+                "description": "Pick the inverter's hidraw device. The legacy USB method ignores the device and finds the inverter by its USB ID.",
                 "data": {
-                    "device_path": "Device Path",
+                    "backend": "Connection method",
+                    "device_path": "Device",
                     "scan_interval": "Polling Interval (seconds)"
                 }
+            },
+            "usb_confirm": {
+                "title": "Axpert Inverter found",
+                "description": "An Axpert inverter was detected. Do you want to set it up?"
             }
         },
         "error": {
             "cannot_connect": "Failed to connect to the inverter"
+        },
+        "abort": {
+            "already_configured": "Device is already configured"
         }
     },
     "options": {
@@ -18,9 +27,11 @@
             "init": {
                 "title": "Axpert Inverter Options",
                 "data": {
-                    "device_path": "Device Path",
+                    "backend": "Connection method",
+                    "device_path": "Device",
                     "scan_interval": "Polling Interval (seconds)"
-                }
+                },
+                "description": "Pick the inverter's hidraw device. The legacy USB method ignores the device and finds the inverter by its USB ID."
             }
         },
         "error": {
@@ -271,6 +282,14 @@
             },
             "dc_dc_overcurrent": {
                 "name": "DC-DC Overcurrent"
+            }
+        }
+    },
+    "selector": {
+        "backend": {
+            "options": {
+                "hidraw": "hidraw (recommended)",
+                "usb": "USB (legacy, will be removed)"
             }
         }
     }

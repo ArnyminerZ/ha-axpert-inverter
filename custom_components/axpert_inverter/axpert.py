@@ -4,6 +4,9 @@ import logging
 import usb.core
 import usb.util
 
+from .const import BACKEND_HIDRAW, BACKEND_USB
+from .hidraw import HidrawConnection, resolve_hidraw_path
+
 _LOGGER = logging.getLogger(__name__)
 
 class USBConnection:
@@ -148,11 +151,25 @@ class USBConnection:
 class AxpertInverter:
     """Class to communicate with the Axpert Inverter via HID."""
 
-    def __init__(self, device_path: str):
-        """Initialize the inverter interface."""
+    def __init__(self, device_path: str | None, backend: str = BACKEND_USB, device_phys: str | None = None):
+        """Initialize the inverter interface.
+
+        backend "hidraw" talks to /dev/hidrawN (device_phys, if given, keeps the
+        device findable when the node number changes). backend "usb" is the legacy
+        pyusb transport, which ignores the path and looks for VID:PID 0665:5161.
+        """
         self._device_path = device_path
+        self._backend = backend
+        self._device_phys = device_phys
         self._lock = threading.Lock()
         self._last_command_time = 0
+
+    def _open_connection(self):
+        """Open a transport for one command exchange."""
+        if self._backend == BACKEND_HIDRAW:
+            path = resolve_hidraw_path(self._device_path, self._device_phys)
+            return HidrawConnection(path, timeout=5000)
+        return USBConnection(timeout=5000)
 
     def _get_crc(self, cmd: str | bytes) -> bytes:
         """Calculate CRC16-XMODEM."""
@@ -195,8 +212,7 @@ class AxpertInverter:
                 try:
                     # Open USB device
                     
-                    # NOTE: We ignore device_path and look for VID:PID 0665:5161
-                    with USBConnection(timeout=5000) as ser:
+                    with self._open_connection() as ser:
                         # Prepare command
                         crc = self._get_crc(command)
                         full_command = command.encode() + crc + b'\r'
