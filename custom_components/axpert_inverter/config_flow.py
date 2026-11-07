@@ -24,7 +24,7 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
 )
 from .axpert import AxpertInverter
-from .hidraw import HidrawDevice, find_hidraw_devices
+from .hidraw import HidrawDevice, discover_hidraw_devices
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ async def _async_validate(hass: HomeAssistant, user_input: dict) -> tuple[dict, 
     data.setdefault(CONF_BACKEND, BACKEND_HIDRAW)
 
     # Remember the stable USB port so the device is found again if hidrawN renumbers
-    devices: list[HidrawDevice] = await hass.async_add_executor_job(find_hidraw_devices)
+    devices: list[HidrawDevice] = await hass.async_add_executor_job(discover_hidraw_devices)
     phys = next((d.phys for d in devices if d.path == path and d.phys), None)
     if phys:
         data[CONF_DEVICE_PHYS] = phys
@@ -67,7 +67,7 @@ async def _async_validate(hass: HomeAssistant, user_input: dict) -> tuple[dict, 
 
 
 async def _async_schema(hass: HomeAssistant, backend: str, path: str | None, scan_interval: int) -> vol.Schema:
-    devices: list[HidrawDevice] = await hass.async_add_executor_job(find_hidraw_devices)
+    devices: list[HidrawDevice] = await hass.async_add_executor_job(discover_hidraw_devices)
     options = [SelectOptionDict(value=d.path, label=d.label) for d in devices]
     default_path = path or (devices[0].path if devices else DEFAULT_DEVICE_PATH)
 
