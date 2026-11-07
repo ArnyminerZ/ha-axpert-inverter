@@ -8,7 +8,7 @@ from homeassistant.exceptions import ServiceValidationError, HomeAssistantError
 from homeassistant.helpers.typing import ConfigType
 
 from .axpert import AxpertInverter
-from .const import DOMAIN, CONF_DEVICE_PATH
+from .const import DOMAIN, CONF_BACKEND, CONF_DEVICE_PATH, CONF_DEVICE_PHYS, BACKEND_USB
 from .coordinator import AxpertDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -24,7 +24,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Prioritize options over data
     device_path = entry.options.get(CONF_DEVICE_PATH, entry.data.get(CONF_DEVICE_PATH))
     
-    inverter = AxpertInverter(device_path)
+    # Entries created before the hidraw backend existed have no backend and keep using pyusb
+    backend = entry.options.get(CONF_BACKEND, entry.data.get(CONF_BACKEND, BACKEND_USB))
+    device_phys = entry.options.get(CONF_DEVICE_PHYS, entry.data.get(CONF_DEVICE_PHYS))
+
+    inverter = AxpertInverter(device_path, backend=backend, device_phys=device_phys)
     coordinator = AxpertDataUpdateCoordinator(hass, inverter, entry)
 
     # Listen for options changes

@@ -56,8 +56,10 @@ Ensure your Home Assistant host has access to the inverter's USB port.
 1.  In Home Assistant, go to **Settings** > **Devices & Services**.
 2.  Click **+ ADD INTEGRATION**.
 3.  Search for **Axpert Inverter**.
-4.  Enter the **Device Path** (default: `/dev/hidraw0`).
+4.  Pick the inverter from the **Device** list (detected `/dev/hidrawX` devices; you can also type a path) and keep **Connection method** on `hidraw (recommended)`.
 5.  Click **Submit**.
+
+The inverter is also offered automatically when it is plugged in. The `USB (legacy)` connection method is the previous `pyusb` transport (it ignores the device and finds the inverter by USB ID); it is kept temporarily as a fallback and will be removed. Existing installations keep using it until you switch in the integration's options.
 
 If connection is successful, the integration will load and entities will become available.
 

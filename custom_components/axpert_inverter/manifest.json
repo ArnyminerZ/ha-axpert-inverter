@@ -4,11 +4,20 @@
   "categories": ["energy.solar_batteries"],
   "codeowners": [],
   "config_flow": true,
+  "dependencies": [
+    "usb"
+  ],
   "documentation": "https://github.com/arnyminerz/axpert-inverter",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/arnyminerz/axpert-inverter/issues",
   "requirements": [
     "pyusb"
   ],
-  "version": "1.0.20"
+  "usb": [
+    {
+      "vid": "0665",
+      "pid": "5161"
+    }
+  ],
+  "version": "1.1.0-beta1"
 }

@@ -3,14 +3,23 @@
         "step": {
             "user": {
                 "title": "Configurar Inversor Axpert",
+                "description": "Tria el dispositiu hidraw de l'inversor. El mètode USB antic ignora el dispositiu i troba l'inversor pel seu ID USB.",
                 "data": {
-                    "device_path": "Ruta del Dispositiu",
+                    "backend": "Mètode de connexió",
+                    "device_path": "Dispositiu",
                     "scan_interval": "Interval d'Actualització (segons)"
                 }
+            },
+            "usb_confirm": {
+                "title": "Inversor Axpert trobat",
+                "description": "S'ha detectat un inversor Axpert. Vols configurar-lo?"
             }
         },
         "error": {
             "cannot_connect": "No s'ha pogut connectar a l'inversor"
+        },
+        "abort": {
+            "already_configured": "El dispositiu ja està configurat"
         }
     },
     "options": {
@@ -18,9 +27,11 @@
             "init": {
                 "title": "Opcions de l'Inversor Axpert",
                 "data": {
-                    "device_path": "Ruta del Dispositiu",
+                    "backend": "Mètode de connexió",
+                    "device_path": "Dispositiu",
                     "scan_interval": "Interval d'Actualització (segons)"
-                }
+                },
+                "description": "Tria el dispositiu hidraw de l'inversor. El mètode USB antic ignora el dispositiu i troba l'inversor pel seu ID USB."
             }
         },
         "error": {
@@ -272,6 +283,14 @@
         },
         "dc_dc_overcurrent": {
             "name": "Sobrecàrrega Corrent DC-DC"
+        }
+    },
+    "selector": {
+        "backend": {
+            "options": {
+                "hidraw": "hidraw (recomanat)",
+                "usb": "USB (antic, s'eliminarà)"
+            }
         }
     }
 }

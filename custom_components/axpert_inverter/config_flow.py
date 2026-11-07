@@ -2,77 +2,139 @@ import logging
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.selector import (
+    SelectOptionDict,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+)
+from homeassistant.helpers.service_info.usb import UsbServiceInfo
 
 from .const import (
-    DOMAIN, 
-    CONF_DEVICE_PATH, 
+    DOMAIN,
+    CONF_BACKEND,
+    CONF_DEVICE_PATH,
+    CONF_DEVICE_PHYS,
     CONF_SCAN_INTERVAL,
+    BACKEND_HIDRAW,
+    BACKEND_USB,
     DEFAULT_DEVICE_PATH,
     DEFAULT_SCAN_INTERVAL,
 )
 from .axpert import AxpertInverter
+from .hidraw import HidrawDevice, find_hidraw_devices
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _probe(backend: str, path: str, phys: str | None) -> str | None:
+    """Talk to the inverter (blocking). Returns its serial number if it answers QID.
+
+    Raises if the inverter can't be reached or doesn't answer QPIGS.
+    """
+    inverter = AxpertInverter(path, backend=backend, device_phys=phys)
+    if not inverter.get_general_status():
+        raise ValueError("Empty response from QPIGS during validation")
+    try:
+        return inverter.get_device_id() or None
+    except Exception:  # noqa: BLE001 - QID is not supported by all firmware
+        return None
+
+
+async def _async_validate(hass: HomeAssistant, user_input: dict) -> tuple[dict, str | None, str | None]:
+    """Validate the input. Returns (data to store, serial, error key)."""
+    data = dict(user_input)
+    path = data.get(CONF_DEVICE_PATH) or DEFAULT_DEVICE_PATH
+    data[CONF_DEVICE_PATH] = path
+    data.setdefault(CONF_BACKEND, BACKEND_HIDRAW)
+
+    # Remember the stable USB port so the device is found again if hidrawN renumbers
+    devices: list[HidrawDevice] = await hass.async_add_executor_job(find_hidraw_devices)
+    phys = next((d.phys for d in devices if d.path == path and d.phys), None)
+    if phys:
+        data[CONF_DEVICE_PHYS] = phys
+    else:
+        data.pop(CONF_DEVICE_PHYS, None)
+
+    try:
+        serial = await hass.async_add_executor_job(_probe, data[CONF_BACKEND], path, phys)
+    except Exception as err:  # noqa: BLE001
+        _LOGGER.error("Failed to connect to the inverter: %s", err)
+        return data, None, "cannot_connect"
+    return data, serial, None
+
+
+async def _async_schema(hass: HomeAssistant, backend: str, path: str | None, scan_interval: int) -> vol.Schema:
+    devices: list[HidrawDevice] = await hass.async_add_executor_job(find_hidraw_devices)
+    options = [SelectOptionDict(value=d.path, label=d.label) for d in devices]
+    default_path = path or (devices[0].path if devices else DEFAULT_DEVICE_PATH)
+
+    return vol.Schema({
+        vol.Required(CONF_BACKEND, default=backend): SelectSelector(
+            SelectSelectorConfig(
+                options=[BACKEND_HIDRAW, BACKEND_USB],
+                mode=SelectSelectorMode.DROPDOWN,
+                translation_key=CONF_BACKEND,
+            )
+        ),
+        vol.Required(CONF_DEVICE_PATH, default=default_path): SelectSelector(
+            SelectSelectorConfig(options=options, custom_value=True, mode=SelectSelectorMode.DROPDOWN)
+        ),
+        vol.Optional(CONF_SCAN_INTERVAL, default=scan_interval): vol.All(vol.Coerce(int), vol.Range(min=1)),
+    })
+
 
 class AxpertConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Axpert Inverter."""
 
     VERSION = 1
 
+    async def async_step_usb(self, discovery_info: UsbServiceInfo) -> FlowResult:
+        """Handle USB discovery (the inverter's VID/PID matched)."""
+        if self._async_current_entries():
+            return self.async_abort(reason="already_configured")
+        return await self.async_step_usb_confirm()
+
+    async def async_step_usb_confirm(self, user_input=None) -> FlowResult:
+        """Ask for confirmation before configuring a discovered inverter."""
+        if user_input is not None:
+            return await self.async_step_user()
+        return self.async_show_form(step_id="usb_confirm")
+
     async def async_step_user(self, user_input=None) -> FlowResult:
         """Handle the initial step."""
         errors = {}
 
         if user_input is not None:
-            device_path = user_input.get(CONF_DEVICE_PATH)
-            scan_interval = user_input.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
-            
-            # Validate connection
-            try:
-                # We do a quick check in executor
-                await self.hass.async_add_executor_job(self._validate_connection, device_path)
-                
+            data, serial, error = await _async_validate(self.hass, user_input)
+            if error is None:
+                unique_id = serial or data.get(CONF_DEVICE_PHYS)
+                if unique_id:
+                    await self.async_set_unique_id(unique_id)
+                    self._abort_if_unique_id_configured()
                 return self.async_create_entry(
-                    title=f"Axpert Inverter ({device_path})",
-                    data=user_input
+                    title=f"Axpert Inverter ({data[CONF_DEVICE_PATH]})",
+                    data=data,
                 )
-            except Exception as e:
-                _LOGGER.error(f"Failed to connect: {e}")
-                errors["base"] = "cannot_connect"
+            errors["base"] = error
 
-        return self.async_show_form(
-            step_id="user",
-            data_schema=vol.Schema({
-                vol.Required(CONF_DEVICE_PATH, default=DEFAULT_DEVICE_PATH): str,
-                vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): vol.All(vol.Coerce(int), vol.Range(min=1)),
-            }),
-            errors=errors,
+        user_input = user_input or {}
+        schema = await _async_schema(
+            self.hass,
+            user_input.get(CONF_BACKEND, BACKEND_HIDRAW),
+            user_input.get(CONF_DEVICE_PATH),
+            user_input.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
         )
+        return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
 
     @staticmethod
+    @callback
     def async_get_options_flow(config_entry):
         """Get the options flow for this handler."""
         return AxpertOptionsFlowHandler()
 
-    def _validate_connection(self, path: str):
-        """Try to connect to the inverter."""
-        inverter = AxpertInverter(path)
-        # Try a simple command like QID or just QPIGS
-        # But QID is safer/faster? 
-        # Actually in axpert.py we implemented send_command.
-        # Let's try get_device_id. If it fails, open might fail or read timeout.
-        try:
-            # Just instantiate and try one command
-            # Note: get_device_id might not work on all firmware, QPIGS is safer as main data source.
-            # But let's try QPIGS to be sure we can read data.
-            res = inverter.get_general_status()
-            if not res:
-                raise Exception("Empty response from QPIGS during validation")
-        except Exception as e:
-            raise Exception(f"Validation failed: {e}")
 
 class AxpertOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow for Axpert Inverter."""
@@ -82,41 +144,22 @@ class AxpertOptionsFlowHandler(config_entries.OptionsFlow):
         errors = {}
 
         if user_input is not None:
-            device_path = user_input.get(CONF_DEVICE_PATH)
+            data, _serial, error = await _async_validate(self.hass, user_input)
+            if error is None:
+                return self.async_create_entry(title="", data=data)
+            errors["base"] = error
 
-            # We can optionally validate the new path here
-            # But normally we just accept it and let the reload handle connection
-            try:
-                # Basic validation using the executor
-                inverter = AxpertInverter(device_path)
-                await self.hass.async_add_executor_job(self._validate_connection_options, inverter)
+        entry = self.config_entry
 
-                return self.async_create_entry(title="", data=user_input)
-            except Exception as e:
-                _LOGGER.error(f"Failed to connect to new path: {e}")
-                errors["base"] = "cannot_connect"
+        def current(key, default=None):
+            return entry.options.get(key, entry.data.get(key, default))
 
-        current_path = self.config_entry.options.get(
-            CONF_DEVICE_PATH, self.config_entry.data.get(CONF_DEVICE_PATH, DEFAULT_DEVICE_PATH)
+        user_input = user_input or {}
+        # Entries created before the hidraw backend existed keep using pyusb until changed here
+        schema = await _async_schema(
+            self.hass,
+            user_input.get(CONF_BACKEND, current(CONF_BACKEND, BACKEND_USB)),
+            user_input.get(CONF_DEVICE_PATH, current(CONF_DEVICE_PATH, DEFAULT_DEVICE_PATH)),
+            user_input.get(CONF_SCAN_INTERVAL, current(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)),
         )
-        current_scan_interval = self.config_entry.options.get(
-            CONF_SCAN_INTERVAL, self.config_entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
-        )
-
-        return self.async_show_form(
-            step_id="init",
-            data_schema=vol.Schema({
-                vol.Required(CONF_DEVICE_PATH, default=current_path): str,
-                vol.Optional(CONF_SCAN_INTERVAL, default=current_scan_interval): vol.All(vol.Coerce(int), vol.Range(min=1)),
-            }),
-            errors=errors,
-        )
-
-    def _validate_connection_options(self, inverter: AxpertInverter):
-        """Validate connection during options update."""
-        try:
-            res = inverter.get_general_status()
-            if not res:
-                raise Exception("Empty response from QPIGS during validation")
-        except Exception as e:
-            raise Exception(f"Validation failed: {e}")
+        return self.async_show_form(step_id="init", data_schema=schema, errors=errors)
