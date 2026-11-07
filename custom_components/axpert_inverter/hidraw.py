@@ -97,6 +97,15 @@ def reattach_kernel_driver(vid: int = AXPERT_VID, pid: int = AXPERT_PID) -> bool
     return False
 
 
+def discover_hidraw_devices() -> list[HidrawDevice]:
+    """List inverters, recovering a node the legacy pyusb backend had detached (blocking)."""
+    devices = find_hidraw_devices()
+    if not devices and reattach_kernel_driver():
+        time.sleep(1.5)  # let udev create the node
+        devices = find_hidraw_devices()
+    return devices
+
+
 def resolve_hidraw_path(path: str | None, phys: str | None = None) -> str:
     """Find the current /dev/hidrawN for a configured device (blocking).
 

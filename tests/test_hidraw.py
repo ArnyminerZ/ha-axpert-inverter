@@ -93,3 +93,28 @@ def test_resolve_raises_when_nothing_found(tmp_path, monkeypatch):
         assert "replug" in str(err)
     else:
         raise AssertionError("expected FileNotFoundError")
+
+
+def test_discover_recovers_detached_device(tmp_path, monkeypatch):
+    """Legacy pyusb leaves no hidraw node; discovery re-attaches the driver and rescans."""
+    real = hidraw.find_hidraw_devices
+    attached = []
+
+    def reattach(*a):
+        _node(tmp_path, "hidraw0", "0003:00000665:00005161")
+        attached.append(True)
+        return True
+
+    monkeypatch.setattr(hidraw, "find_hidraw_devices", lambda: real(sys_root=tmp_path))
+    monkeypatch.setattr(hidraw, "reattach_kernel_driver", reattach)
+    monkeypatch.setattr(hidraw.time, "sleep", lambda s: None)
+    assert [d.path for d in hidraw.discover_hidraw_devices()] == ["/dev/hidraw0"]
+    assert attached
+
+
+def test_discover_does_not_reattach_when_present(tmp_path, monkeypatch):
+    real = hidraw.find_hidraw_devices
+    _node(tmp_path, "hidraw0", "0003:00000665:00005161")
+    monkeypatch.setattr(hidraw, "find_hidraw_devices", lambda: real(sys_root=tmp_path))
+    monkeypatch.setattr(hidraw, "reattach_kernel_driver", lambda *a: (_ for _ in ()).throw(AssertionError("unexpected")))
+    assert len(hidraw.discover_hidraw_devices()) == 1
