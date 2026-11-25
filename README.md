@@ -1,5 +1,8 @@
 # Axpert Inverter Home Assistant Integration
 
+[![Open your Home Assistant instance and open this repository in the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=ArnyminerZ&repository=ha-axpert-inverter&category=integration)
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=axpert_inverter)
+
 This custom component integrates Axpert Inverters directly into Home Assistant via USB (HID), replacing the need for external tools like `mppsolar` or MQTT bridges. It communicates directly with the inverter using the QPIGS protocol.
 
 > [!WARNING]
@@ -36,7 +39,16 @@ Ensure your Home Assistant host has access to the inverter's USB port.
 
 ## Installation
 
-### Option 1: HACS (Recommended)
+### Option 1: Marketplace (Recommended)
+Home Assistant 2026.11 replaced HACS with the built-in **Marketplace**. On earlier versions, use [HACS](https://hacs.xyz) instead (see below).
+
+#### Home Assistant 2026.11 or newer
+1.  Click the **Open Marketplace Repository on My HA** badge above (or open **Settings** > **Marketplace**, then add this repository as a custom repository with the **Integration** category).
+2.  Find **Axpert Inverter** and click **Download**.
+3.  Restart Home Assistant.
+4.  Click the **Add Integration to My HA** badge above to set it up (see [Configuration](#configuration)).
+
+#### Before Home Assistant 2026.11 (HACS)
 1.  Open **HACS** in Home Assistant.
 2.  Go to **Integrations** > **Three dots (top right)** > **Custom repositories**.
 3.  Add the URL of this repository and select **Integration** as the category.
@@ -54,7 +66,7 @@ Ensure your Home Assistant host has access to the inverter's USB port.
 ## Configuration
 
 1.  In Home Assistant, go to **Settings** > **Devices & Services**.
-2.  Click **+ ADD INTEGRATION**.
+2.  Click **+ ADD INTEGRATION** (or use the **Add Integration to My HA** badge above).
 3.  Search for **Axpert Inverter**.
 4.  Pick the inverter from the **Device** list (detected `/dev/hidrawX` devices; you can also type a path) and keep **Connection method** on `hidraw (recommended)`.
 5.  Click **Submit**.
